@@ -7407,9 +7407,11 @@ c
 !$OMP& w2scale,w3scale,w4scale,w5scale,nelst,elst,dpequal,use_thole,
 !$OMP& use_chgpen,use_chgflx,use_dirdamp,use_bounds,off2,f,aewald,
 !$OMP& optorder,copm,uopt,uoptp,poltyp,tcgnab,uad,uap,ubd,ubp,xaxis,
-!$OMP& yaxis,zaxis)
+!$OMP& yaxis,zaxis,sizpei,dmppei,elepei,use_exind,pr2scale,pr3scale,
+!$OMP& pr4scale,pr5scale,pr2iscale,pr3iscale,pr4iscale,pr5iscale,
+!$OMP& wr2scale,wr3scale,wr4scale,wr5scale)
 !$OMP& shared (dep,ufld,dufld,pot,vir)
-!$OMP& firstprivate(pscale,dscale,uscale,wscale)
+!$OMP& firstprivate(pscale,dscale,uscale,wscale,prscale,wrscale)
 !$OMP DO reduction(+:dep,ufld,dufld,pot,vir) schedule(guided)
 c
 c     compute the dipole polarization gradient components

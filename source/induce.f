@@ -633,13 +633,6 @@ c
          end do
       end do
 c
-c     zero out the value of the field due to exind at each site
-c
-      do j = 1, 3
-         frid(j) = 0.0d0
-         frkd(j) = 0.0d0
-      end do
-c
 c     set conversion factor and switching function coefficients
 c
       f = sqrt(electric/dielec)
@@ -1299,15 +1292,6 @@ c
             field(j,ii) = 0.0d0
             fieldp(j,ii) = 0.0d0
          end do
-      end do
-c
-c     zero out the value of the field due to exind at each site
-c
-      do j = 1, 3
-         frid(j) = 0.0d0
-         frkd(j) = 0.0d0
-         frip(j) = 0.0d0
-         frkp(j) = 0.0d0
       end do
 c
 c     set conversion factor and switching function coefficients
@@ -3427,13 +3411,6 @@ c
          end do
       end do
 c
-c     zero out the value of the field due to exind at each site
-c
-      do j = 1, 3
-         frid(j) = 0.0d0
-         frkd(j) = 0.0d0
-      end do
-c
 c     OpenMP directives for the major loop structure
 c
 !$OMP PARALLEL default(private) shared(npole,ipole,rpole,x,y,z,pcore,
@@ -3442,8 +3419,11 @@ c
 !$OMP& d2scale,d3scale,d4scale,u1scale,u2scale,u3scale,u4scale,n12,i12,
 !$OMP& n13,i13,n14,i14,n15,i15,np11,ip11,np12,ip12,np13,ip13,np14,ip14,
 !$OMP& nelst,elst,dpequal,use_thole,use_chgpen,use_bounds,off2,poltyp,
-!$OMP& nchunk,ntpair,tindex,tdipdip,toffset,field,fieldp,fieldt,fieldtp)
-!$OMP& firstprivate(pscale,dscale,uscale,wscale,nlocal)
+!$OMP& nchunk,ntpair,tindex,tdipdip,toffset,field,fieldp,fieldt,fieldtp,
+!$OMP& sizpei,dmppei,elepei,use_exind,pr2scale,pr3scale,pr4scale,
+!$OMP& pr5scale,pr2iscale,pr3iscale,pr4iscale,pr5iscale,wr2scale,
+!$OMP& wr3scale,wr4scale,wr5scale,f)
+!$OMP& firstprivate(pscale,dscale,uscale,wscale,nlocal,prscale,wrscale)
 !$OMP DO reduction(+:fieldt,fieldtp) schedule(static,nchunk)
 c
 c     compute the real space portion of the Ewald summation
