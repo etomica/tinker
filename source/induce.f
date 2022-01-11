@@ -653,6 +653,13 @@ c
          prscale(i) = 1.0d0
       end do
 c
+c     zero out repulsive field components
+c
+      do i = 1, 3
+         frid(i) = 0.0d0
+         frkd(i) = 0.0d0
+      end do
+c
 c     find the electrostatic field due to permanent multipoles
 c
       do ii = 1, npole-1
@@ -671,11 +678,11 @@ c
             corei = pcore(ii)
             vali = pval(ii)
             alphai = palpha(ii)
-            if (use_exind) then
-               rsizi = sizpei(ii) / f
-               rdmpi = dmppei(ii)
-               rvali = elepei(ii)
-            end if
+         end if
+         if (use_exind) then
+            rsizi = sizpei(ii) / f
+            rdmpi = dmppei(ii)
+            rvali = elepei(ii)
          end if
 c
 c     set exclusion coefficients for connected atoms
@@ -857,33 +864,36 @@ c
                   fkd(3) = zr*(rr3*corei + rr3i*vali
      &                        + rr5i*dir + rr7i*qir)
      &                        - rr3i*diz - 2.0d0*rr5i*qiz
-                  if (use_exind) then
-                     rsizk = sizpei(kk) / f
-                     rdmpk = dmppei(kk)
-                     rvalk = elepei(kk)
-                     rr1 = 1.0d0 / r
-                     call damprep (r,r2,rr1,rr3,rr5,rr7,rr9,rr11,
-     &                             7,rdmpi,rdmpk,rdmpik)
-                     rsizik = rsizi*rsizk
-                     frid(1) = rsizik*(-xr*(rdmpik(3)*rvalk
-     &                      - rdmpik(5)*dkr + rdmpik(7)*qkr)
-     &                      - rdmpik(3)*dkx + 2.0d0*rdmpik(5)*qkx)*rr1
-                     frid(2) = rsizik*(-yr*(rdmpik(3)*rvalk
-     &                      - rdmpik(5)*dkr + rdmpik(7)*qkr)
-     &                      - rdmpik(3)*dky + 2.0d0*rdmpik(5)*qky)*rr1
-                     frid(3) = rsizik*(-zr*(rdmpik(3)*rvalk
-     &                      - rdmpik(5)*dkr + rdmpik(7)*qkr)
-     &                      - rdmpik(3)*dkz + 2.0d0*rdmpik(5)*qkz)*rr1
-                     frkd(1) = rsizik*(xr*(rdmpik(3)*rvali
-     &                      + rdmpik(5)*dir + rdmpik(7)*qir)
-     &                      - rdmpik(3)*dix - 2.0d0*rdmpik(5)*qix)*rr1
-                     frkd(2) = rsizik*(yr*(rdmpik(3)*rvali
-     &                      + rdmpik(5)*dir + rdmpik(7)*qir)
-     &                      - rdmpik(3)*diy - 2.0d0*rdmpik(5)*qiy)*rr1
-                     frkd(3) = rsizik*(zr*(rdmpik(3)*rvali
-     &                      + rdmpik(5)*dir + rdmpik(7)*qir)
-     &                      - rdmpik(3)*diz - 2.0d0*rdmpik(5)*qiz)*rr1
-                  end if
+               end if
+c
+c     find the field components due to repulsion
+c
+               if (use_exind) then
+                  rsizk = sizpei(kk) / f
+                  rdmpk = dmppei(kk)
+                  rvalk = elepei(kk)
+                  rr1 = 1.0d0 / r
+                  call damprep (r,r2,rr1,rr3,rr5,rr7,rr9,rr11,
+     &                            7,rdmpi,rdmpk,rdmpik)
+                  rsizik = rsizi*rsizk
+                  frid(1) = rsizik*(-xr*(rdmpik(3)*rvalk
+     &                     - rdmpik(5)*dkr + rdmpik(7)*qkr)
+     &                     - rdmpik(3)*dkx + 2.0d0*rdmpik(5)*qkx)*rr1
+                  frid(2) = rsizik*(-yr*(rdmpik(3)*rvalk
+     &                     - rdmpik(5)*dkr + rdmpik(7)*qkr)
+     &                     - rdmpik(3)*dky + 2.0d0*rdmpik(5)*qky)*rr1
+                  frid(3) = rsizik*(-zr*(rdmpik(3)*rvalk
+     &                     - rdmpik(5)*dkr + rdmpik(7)*qkr)
+     &                     - rdmpik(3)*dkz + 2.0d0*rdmpik(5)*qkz)*rr1
+                  frkd(1) = rsizik*(xr*(rdmpik(3)*rvali
+     &                     + rdmpik(5)*dir + rdmpik(7)*qir)
+     &                     - rdmpik(3)*dix - 2.0d0*rdmpik(5)*qix)*rr1
+                  frkd(2) = rsizik*(yr*(rdmpik(3)*rvali
+     &                     + rdmpik(5)*dir + rdmpik(7)*qir)
+     &                     - rdmpik(3)*diy - 2.0d0*rdmpik(5)*qiy)*rr1
+                  frkd(3) = rsizik*(zr*(rdmpik(3)*rvali
+     &                     + rdmpik(5)*dir + rdmpik(7)*qir)
+     &                     - rdmpik(3)*diz - 2.0d0*rdmpik(5)*qiz)*rr1
                end if
 c
 c     increment the direct electrostatic field components
@@ -1314,6 +1324,15 @@ c
          wrscale(i) = 1.0d0
       end do
 c
+c     zero out repulsive field components
+c
+      do i = 1, 3
+         frid(i) = 0.0d0
+         frkd(i) = 0.0d0
+         frip(i) = 0.0d0
+         frkp(i) = 0.0d0
+      end do
+c
 c     find the electrostatic field due to mutual induced dipoles
 c
       do ii = 1, npole-1
@@ -1328,10 +1347,10 @@ c
             corei = pcore(ii)
             vali = pval(ii)
             alphai = palpha(ii)
-            if (use_exind) then
-               rsizi = sizpei(ii) / f
-               rdmpi = dmppei(ii)
-            end if
+         end if
+         if (use_exind) then
+            rsizi = sizpei(ii) / f
+            rdmpi = dmppei(ii)
          end if
 c
 c     set exclusion coefficients for connected atoms
@@ -1424,7 +1443,10 @@ c
                fkp(1) = rr3*pix + rr5*pir*xr
                fkp(2) = rr3*piy + rr5*pir*yr
                fkp(3) = rr3*piz + rr5*pir*zr
-               if (use_exind .and. use_chgpen) then
+c
+c     increment the mutual repulsive field components
+c
+               if (use_exind) then
                   rsizk = sizpei(kk) / f
                   rdmpk = dmppei(kk)
                   rr1 = 1.0d0 / r
@@ -3402,6 +3424,13 @@ c
          wrscale(i) = 1.0d0
       end do
 c
+c     zero out repulsive field components
+c
+      do i = 1, 3
+         frid(i) = 0.0d0
+         frkd(i) = 0.0d0
+      end do
+c
 c     initialize local variables for OpenMP calculation
 c
       do ii = 1, npole
@@ -3423,7 +3452,8 @@ c
 !$OMP& sizpei,dmppei,elepei,use_exind,pr2scale,pr3scale,pr4scale,
 !$OMP& pr5scale,pr2iscale,pr3iscale,pr4iscale,pr5iscale,wr2scale,
 !$OMP& wr3scale,wr4scale,wr5scale,f)
-!$OMP& firstprivate(pscale,dscale,uscale,wscale,nlocal,prscale,wrscale)
+!$OMP& firstprivate(pscale,dscale,uscale,wscale,nlocal,prscale,wrscale,
+!$OMP& frid,frkd)
 !$OMP DO reduction(+:fieldt,fieldtp) schedule(static,nchunk)
 c
 c     compute the real space portion of the Ewald summation
@@ -3444,11 +3474,11 @@ c
             corei = pcore(ii)
             vali = pval(ii)
             alphai = palpha(ii)
-            if (use_exind) then
-               rsizi = sizpei(ii) / f
-               rdmpi = dmppei(ii)
-               rvali = elepei(ii)
-            end if
+         end if
+         if (use_exind) then
+            rsizi = sizpei(ii) / f
+            rdmpi = dmppei(ii)
+            rvali = elepei(ii)
          end if
 c
 c     set exclusion coefficients for connected atoms
@@ -3729,6 +3759,9 @@ c
                   fkp(3) = zr*(rr3*corei + rr3i*vali
      &                        + rr5i*dir + rr7i*qir)
      &                        - rr3i*diz - 2.0d0*rr5i*qiz
+c
+c     find the field components due to repulsion
+c
                   if (use_exind) then
                      rsizk = sizpei(kk) / f
                      rdmpk = dmppei(kk)
