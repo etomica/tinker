@@ -17,6 +17,7 @@ c     r3scale    scale factor for 1-3 repulsion energy interactions
 c     r4scale    scale factor for 1-4 repulsion energy interactions
 c     r5scale    scale factor for 1-5 repulsion energy interactions
 c     reppolar   flag to use induced dipoles in repulsion density
+c     delS2R     flag to use del(S2/R) model for repulsion
 c
 c
       module reppot
@@ -26,5 +27,6 @@ c
       real*8 r4scale
       real*8 r5scale
       logical reppolar
+      logical delS2R
       save
       end

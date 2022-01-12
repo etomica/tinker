@@ -722,6 +722,7 @@ c
 c
       subroutine damprep (r,r2,rr1,rr3,rr5,rr7,rr9,rr11,
      &                       rorder,dmpi,dmpk,dmpik)
+      use reppot
       implicit none
       integer rorder
       real*8 r,r2,r3,r4
@@ -740,9 +741,19 @@ c
       real*8 dmpk26
       real*8 eps,diff
       real*8 expi,expk
-      real*8 dampi,dampk
       real*8 pre,term,tmp
       real*8 dmpik(*)
+      real*8 dampi,dampk
+      real*8 dampi2,dampi3,dampi4,dampi5
+      real*8 dampk2,dampk3,dampk4,dampk5
+      real*8 pi1,pi2,pi3,pi4,pi5
+      real*8 pk1,pk2,pk3,pk4,pk5
+      real*8 term3, pik
+      real*8 s0s1,s0s2,s0s3,s0s4,s0s5
+      real*8 s1s1,s1s2,s1s3,s1s4
+      real*8 s2s2,s2s3
+      real*8 f5,f7,f9,f11
+      real*8 pre3
 c
 c
 c     compute tolerance value for damping exponents
@@ -750,154 +761,279 @@ c
       eps = 0.001d0
       diff = abs(dmpi-dmpk)
 c
-c     treat the case where alpha damping exponents are equal
+c     del(S2/R) model
 c
-      if (diff .lt. eps) then
+      if (delS2R) then
          r3 = r2 * r
          r4 = r3 * r
          r5 = r4 * r
          r6 = r5 * r
-         dmpi2 = 0.5d0 * dmpi
-         dampi = dmpi2 * r
-         expi = exp(-dampi)
-         dmpi22 = dmpi2 * dmpi2
-         dmpi23 = dmpi22 * dmpi2
-         dmpi24 = dmpi23 * dmpi2
-         dmpi25 = dmpi24 * dmpi2
-         pre = 2.0d0
-         s = (r + dmpi2*r2 + dmpi22*r3/3.0d0) * expi
-         ds = (dmpi22*r3 + dmpi23*r4) * expi / 3.0d0
-         d2s = dmpi24 * expi * r5 / 9.0d0
-         d3s = dmpi25 * expi * r6 / 45.0d0
-         if (rorder .ge. 9) then
-            r7 = r6 * r
-            dmpi26 = dmpi25 * dmpi2
-            d4s = (dmpi25*r6 + dmpi26*r7) * expi / 315.0d0
-            if (rorder .ge. 11) then
-               r8 = r7 * r
-               dmpi27 = dmpi2 * dmpi26
-               d5s = (dmpi25*r6 + dmpi26*r7 + dmpi27*r8/3.0d0)
-     &                   * expi / 945.0d0
+c
+c        treat the case where alpha damping exponents are equal
+c
+         if (diff .lt. eps) then
+            pre = dmpi * dmpi
+            dmpi2 = 0.5d0 * dmpi
+            dampi = dmpi2 * r
+            dampi2 = dampi * dampi
+            expi = exp(-dampi)
+            dmpi22 = dmpi2 * dmpi2
+            s = (1.0d0 + dampi + dampi2/3.0d0) * expi / dmpi**3
+            ds = -r * (1.0d0 + dampi) * expi / (12.0d0*dmpi)
+            d2s = -(1.0d0 + dampi - dampi2) * expi / (12.0d0*dmpi)
+            d3s = dampi * (1.0d0 - dampi/3.0d0) * expi / 8.0d0
+            if (rorder .ge. 9) then
+               d4s = dmpi2 * (1.0d0 - 10.0d0*dampi/6.0d0+dampi2/3.0d0)
+     &               * expi / 8.0d0
+               if (rorder .ge. 11) then
+                  d5s = -dmpi22 * (1 - 7.0d0*dampi/8.0d0 + dampi2/8.0d0)
+     &               * expi / 3.0d0
+               end if
+            end if
+c  
+c        treat the case where alpha damping exponents are unequal
+c  
+         else
+            pre = dmpi * dmpk
+            dmpi2 = 0.5d0 * dmpi
+            dmpk2 = 0.5d0 * dmpk
+            dmpi22 = dmpi2 * dmpi2
+            dmpk22 = dmpk2 * dmpk2
+            dampi = dmpi2 * r
+            dampk = dmpk2 * r
+            expi = exp(-dampi)
+            expk = exp(-dampk)
+            term = dmpi22 - dmpk22
+            term3 = term**3
+            pik = term * r2 / 4.0d0
+            dampi2 = dampi * dampi
+            dampi3 = dampi2 * dampi
+            dampk2 = dampk * dampk
+            dampk3 = dampk2 * dampk
+            s = (dmpk * (term * r + 2.0d0 * dmpi) * expi
+     &         + dmpi * (term * r - 2.0d0 * dmpk) * expk) 
+     &         / (2.0d0 * term3 * r)
+            pi1 = 1 + dampi
+            pi2 = pi1 + dampi2 / 2.0d0
+            pi3 = pi2 + dampi3 / 6.0d0
+            pk1 = -1 - dampk
+            pk2 = pk1 - dampk2 / 2.0d0
+            pk3 = pk2 - dampk3 / 6.0d0
+            ds = -pre * ((pi1 + pik) * expi + (pk1 + pik) * expk)
+     &            / (term3 * r2)
+            d2s = 2.0d0 * pre * ((pi2 + pik*dampi/2.0d0) * expi 
+     &            + (pk2 + pik*dampk/2.0d0) * expk) / (term3 * r3)
+            d3s = -6.0d0 * pre * ((pi3 + pik*dampi2/6.0d0) * expi 
+     &            + (pk3 + pik*dampk2/6.0d0) * expk) / (term3 * r4)
+            if (rorder .ge. 9) then
+               dampi4 = dampi3 * dampi
+               dampk4 = dampk3 * dampk
+               pi4 = pi3 + dampi4 / 24.0d0
+               pk4 = pk3 - dampk4 / 24.0d0
+               d4s = 24.0d0 * pre * ((pi4 + pik*dampi3/24.0d0) * expi 
+     &            + (pk4 + pik*dampk3/24.0d0) * expk) / (term3 * r5)
+               if (rorder .ge. 11) then
+                  dampi5 = dampi4 * dampi
+                  dampk5 = dampk4 * dampk
+                  pi5 = pi4 + dampi5 / 120.0d0
+                  pk5 = pk4 - dampk5 / 120.0d0
+                  d5s = -120.0d0*pre * ((pi5 + pik*dampi4/120.0d0)*expi 
+     &               + (pk5 + pik*dampk4/120.0d0) * expk) / (term3 * r6)
+               end if
             end if
          end if
 c
-c     treat the case where alpha damping exponents are unequal
+c     del(S2)/R model
 c
       else
-         r3 = r2 * r
-         r4 = r3 * r
-         dmpi2 = 0.5d0 * dmpi
-         dmpk2 = 0.5d0 * dmpk
-         dampi = dmpi2 * r
-         dampk = dmpk2 * r
-         expi = exp(-dampi)
-         expk = exp(-dampk)
-         dmpi22 = dmpi2 * dmpi2
-         dmpi23 = dmpi22 * dmpi2
-         dmpi24 = dmpi23 * dmpi2
-         dmpk22 = dmpk2 * dmpk2
-         dmpk23 = dmpk22 * dmpk2
-         dmpk24 = dmpk23 * dmpk2
-         term = dmpi22 - dmpk22
-         pre = 128.0d0 * dmpi23 * dmpk23 / term**4
-         tmp = 4.0d0 * dmpi2 * dmpk2 / term
-         s = (dampi-tmp)*expk + (dampk+tmp)*expi
-         ds = (dmpi2*dmpk2*r2 - 4.0d0*dmpi2*dmpk22*r/term
-     &            - 4.0d0*dmpi2*dmpk2/term) * expk
-     &      + (dmpi2*dmpk2*r2 + 4.0d0*dmpi22*dmpk2*r/term
-     &            + 4.0d0*dmpi2*dmpk2/term) * expi
-         d2s = (dmpi2*dmpk2*r2/3.0d0
-     &             + dmpi2*dmpk22*r3/3.0d0
-     &             - (4.0d0/3.0d0)*dmpi2*dmpk23*r2/term
-     &             - 4.0d0*dmpi2*dmpk22*r/term
-     &             - 4.0d0*dmpi2*dmpk2/term) * expk
-     &       + (dmpi2*dmpk2*r2/3.0d0
-     &             + dmpi22*dmpk2*r3/3.0d0
-     &             + (4.0d0/3.0d0)*dmpi23*dmpk2*r2/term
-     &             + 4.0d0*dmpi22*dmpk2*r/term
-     &             + 4.0d0*dmpi2*dmpk2/term) * expi
-         d3s = (dmpi2*dmpk23*r4/15.0d0
-     &             + dmpi2*dmpk22*r3/5.0d0
-     &             + dmpi2*dmpk2*r2/5.0d0
-     &             - (4.0d0/15.0d0)*dmpi2*dmpk24*r3/term
-     &             - (8.0d0/5.0d0)*dmpi2*dmpk23*r2/term
-     &             - 4.0d0*dmpi2*dmpk22*r/term
-     &             - 4.0d0/term*dmpi2*dmpk2) * expk
-     &       + (dmpi23*dmpk2*r4/15.0d0 
-     &             + dmpi22*dmpk2*r3/5.0d0
-     &             + dmpi2*dmpk2*r2/5.0d0 
-     &             + (4.0d0/15.0d0)*dmpi24*dmpk2*r3/term
-     &             + (8.0d0/5.0d0)*dmpi23*dmpk2*r2/term
-     &             + 4.0d0*dmpi22*dmpk2*r/term
-     &             + 4.0d0/term*dmpi2*dmpk2) * expi
-         if (rorder .ge. 9) then
+c
+c        treat the case where alpha damping exponents are equal
+c
+         if (diff .lt. eps) then
+            r3 = r2 * r
+            r4 = r3 * r
             r5 = r4 * r
+            r6 = r5 * r
+            dmpi2 = 0.5d0 * dmpi
+            dampi = dmpi2 * r
+            expi = exp(-dampi)
+            dmpi22 = dmpi2 * dmpi2
+            dmpi23 = dmpi22 * dmpi2
+            dmpi24 = dmpi23 * dmpi2
             dmpi25 = dmpi24 * dmpi2
-            dmpk25 = dmpk24 * dmpk2
-            d4s = (dmpi2*dmpk24*r5/105.0d0
-     &                + (2.0d0/35.0d0)*dmpi2*dmpk23*r4
-     &                + dmpi2*dmpk22*r3/7.0d0
-     &                + dmpi2*dmpk2*r2/7.0d0
-     &                - (4.0d0/105.0d0)*dmpi2*dmpk25*r4/term
-     &                - (8.0d0/21.0d0)*dmpi2*dmpk24*r3/term
-     &                - (12.0d0/7.0d0)*dmpi2*dmpk23*r2/term
+            pre = 2.0d0
+            s = (r + dmpi2*r2 + dmpi22*r3/3.0d0) * expi
+            ds = (dmpi22*r3 + dmpi23*r4) * expi / 3.0d0
+            d2s = dmpi24 * expi * r5 / 9.0d0
+            d3s = dmpi25 * expi * r6 / 45.0d0
+            if (rorder .ge. 9) then
+               r7 = r6 * r
+               dmpi26 = dmpi25 * dmpi2
+               d4s = (dmpi25*r6 + dmpi26*r7) * expi / 315.0d0
+               if (rorder .ge. 11) then
+                  r8 = r7 * r
+                  dmpi27 = dmpi2 * dmpi26
+                  d5s = (dmpi25*r6 + dmpi26*r7 + dmpi27*r8/3.0d0)
+     &                      * expi / 945.0d0
+               end if
+            end if
+c  
+c        treat the case where alpha damping exponents are unequal
+c  
+         else
+            r3 = r2 * r
+            r4 = r3 * r
+            dmpi2 = 0.5d0 * dmpi
+            dmpk2 = 0.5d0 * dmpk
+            dampi = dmpi2 * r
+            dampk = dmpk2 * r
+            expi = exp(-dampi)
+            expk = exp(-dampk)
+            dmpi22 = dmpi2 * dmpi2
+            dmpi23 = dmpi22 * dmpi2
+            dmpi24 = dmpi23 * dmpi2
+            dmpk22 = dmpk2 * dmpk2
+            dmpk23 = dmpk22 * dmpk2
+            dmpk24 = dmpk23 * dmpk2
+            term = dmpi22 - dmpk22
+            pre = 128.0d0 * dmpi23 * dmpk23 / term**4
+            tmp = 4.0d0 * dmpi2 * dmpk2 / term
+            s = (dampi-tmp)*expk + (dampk+tmp)*expi
+            ds = (dmpi2*dmpk2*r2 - 4.0d0*dmpi2*dmpk22*r/term
+     &               - 4.0d0*dmpi2*dmpk2/term) * expk
+     &         + (dmpi2*dmpk2*r2 + 4.0d0*dmpi22*dmpk2*r/term
+     &               + 4.0d0*dmpi2*dmpk2/term) * expi
+            d2s = (dmpi2*dmpk2*r2/3.0d0
+     &                + dmpi2*dmpk22*r3/3.0d0
+     &                - (4.0d0/3.0d0)*dmpi2*dmpk23*r2/term
      &                - 4.0d0*dmpi2*dmpk22*r/term
      &                - 4.0d0*dmpi2*dmpk2/term) * expk
-     &          + (dmpi24*dmpk2*r5/105.0d0
-     &                + (2.0d0/35.0d0)*dmpi23*dmpk2*r4
-     &                + dmpi22*dmpk2*r3/7.0d0
-     &                + dmpi2*dmpk2*r2/7.0d0
-     &                + (4.0d0/105.0d0)*dmpi25*dmpk2*r4/term
-     &                + (8.0d0/21.0d0)*dmpi24*dmpk2*r3/term
-     &                + (12.0d0/7.0d0)*dmpi23*dmpk2*r2/term
+     &          + (dmpi2*dmpk2*r2/3.0d0
+     &                + dmpi22*dmpk2*r3/3.0d0
+     &                + (4.0d0/3.0d0)*dmpi23*dmpk2*r2/term
      &                + 4.0d0*dmpi22*dmpk2*r/term
      &                + 4.0d0*dmpi2*dmpk2/term) * expi
-            if (rorder .ge. 11) then
-               r6 = r5 * r
-               dmpi26 = dmpi25 * dmpi2
-               dmpk26 = dmpk25 * dmpk2
-               d5s = (dmpi2*dmpk25*r6/945.0d0
-     &                   + (2.0d0/189.0d0)*dmpi2*dmpk24*r5
-     &                   + dmpi2*dmpk23*r4/21.0d0
-     &                   + dmpi2*dmpk22*r3/9.0d0
-     &                   + dmpi2*dmpk2*r2/9.0d0
-     &                   - (4.0d0/945.0d0)*dmpi2*dmpk26*r5/term
-     &                   - (4.0d0/63.0d0)*dmpi2*dmpk25*r4/term
-     &                   - (4.0d0/9.0d0)*dmpi2*dmpk24*r3/term
-     &                   - (16.0d0/9.0d0)*dmpi2*dmpk23*r2/term
+            d3s = (dmpi2*dmpk23*r4/15.0d0
+     &                + dmpi2*dmpk22*r3/5.0d0
+     &                + dmpi2*dmpk2*r2/5.0d0
+     &                - (4.0d0/15.0d0)*dmpi2*dmpk24*r3/term
+     &                - (8.0d0/5.0d0)*dmpi2*dmpk23*r2/term
+     &                - 4.0d0*dmpi2*dmpk22*r/term
+     &                - 4.0d0/term*dmpi2*dmpk2) * expk
+     &          + (dmpi23*dmpk2*r4/15.0d0 
+     &                + dmpi22*dmpk2*r3/5.0d0
+     &                + dmpi2*dmpk2*r2/5.0d0 
+     &                + (4.0d0/15.0d0)*dmpi24*dmpk2*r3/term
+     &                + (8.0d0/5.0d0)*dmpi23*dmpk2*r2/term
+     &                + 4.0d0*dmpi22*dmpk2*r/term
+     &                + 4.0d0/term*dmpi2*dmpk2) * expi
+            if (rorder .ge. 9) then
+               r5 = r4 * r
+               dmpi25 = dmpi24 * dmpi2
+               dmpk25 = dmpk24 * dmpk2
+               d4s = (dmpi2*dmpk24*r5/105.0d0
+     &                   + (2.0d0/35.0d0)*dmpi2*dmpk23*r4
+     &                   + dmpi2*dmpk22*r3/7.0d0
+     &                   + dmpi2*dmpk2*r2/7.0d0
+     &                   - (4.0d0/105.0d0)*dmpi2*dmpk25*r4/term
+     &                   - (8.0d0/21.0d0)*dmpi2*dmpk24*r3/term
+     &                   - (12.0d0/7.0d0)*dmpi2*dmpk23*r2/term
      &                   - 4.0d0*dmpi2*dmpk22*r/term
      &                   - 4.0d0*dmpi2*dmpk2/term) * expk
-     &             + (dmpi25*dmpk2*r6/945.0d0
-     &                   + (2.0d0/189.0d0)*dmpi24*dmpk2*r5
-     &                   + dmpi23*dmpk2*r4/21.0d0
-     &                   + dmpi22*dmpk2*r3/9.0d0
-     &                   + dmpi2*dmpk2*r2/9.0d0
-     &                   + (4.0d0/945.0d0)*dmpi26*dmpk2*r5/term
-     &                   + (4.0d0/63.0d0)*dmpi25*dmpk2*r4/term
-     &                   + (4.0d0/9.0d0)*dmpi24*dmpk2*r3/term
-     &                   + (16.0d0/9.0d0)*dmpi23*dmpk2*r2/term
+     &             + (dmpi24*dmpk2*r5/105.0d0
+     &                   + (2.0d0/35.0d0)*dmpi23*dmpk2*r4
+     &                   + dmpi22*dmpk2*r3/7.0d0
+     &                   + dmpi2*dmpk2*r2/7.0d0
+     &                   + (4.0d0/105.0d0)*dmpi25*dmpk2*r4/term
+     &                   + (8.0d0/21.0d0)*dmpi24*dmpk2*r3/term
+     &                   + (12.0d0/7.0d0)*dmpi23*dmpk2*r2/term
      &                   + 4.0d0*dmpi22*dmpk2*r/term
      &                   + 4.0d0*dmpi2*dmpk2/term) * expi
+               if (rorder .ge. 11) then
+                  r6 = r5 * r
+                  dmpi26 = dmpi25 * dmpi2
+                  dmpk26 = dmpk25 * dmpk2
+                  d5s = (dmpi2*dmpk25*r6/945.0d0
+     &                      + (2.0d0/189.0d0)*dmpi2*dmpk24*r5
+     &                      + dmpi2*dmpk23*r4/21.0d0
+     &                      + dmpi2*dmpk22*r3/9.0d0
+     &                      + dmpi2*dmpk2*r2/9.0d0
+     &                      - (4.0d0/945.0d0)*dmpi2*dmpk26*r5/term
+     &                      - (4.0d0/63.0d0)*dmpi2*dmpk25*r4/term
+     &                      - (4.0d0/9.0d0)*dmpi2*dmpk24*r3/term
+     &                      - (16.0d0/9.0d0)*dmpi2*dmpk23*r2/term
+     &                      - 4.0d0*dmpi2*dmpk22*r/term
+     &                      - 4.0d0*dmpi2*dmpk2/term) * expk
+     &                + (dmpi25*dmpk2*r6/945.0d0
+     &                      + (2.0d0/189.0d0)*dmpi24*dmpk2*r5
+     &                      + dmpi23*dmpk2*r4/21.0d0
+     &                      + dmpi22*dmpk2*r3/9.0d0
+     &                      + dmpi2*dmpk2*r2/9.0d0
+     &                      + (4.0d0/945.0d0)*dmpi26*dmpk2*r5/term
+     &                      + (4.0d0/63.0d0)*dmpi25*dmpk2*r4/term
+     &                      + (4.0d0/9.0d0)*dmpi24*dmpk2*r3/term
+     &                      + (16.0d0/9.0d0)*dmpi23*dmpk2*r2/term
+     &                      + 4.0d0*dmpi22*dmpk2*r/term
+     &                      + 4.0d0*dmpi2*dmpk2/term) * expi
+               end if
             end if
          end if
       end if
 c
-c     convert partial derivatives into full derivatives
+c     del(S2/R) model convert partial derivatives into full derivatives
 c
-      s = s * rr1
-      ds = ds * rr3
-      d2s = d2s * rr5
-      d3s = d3s * rr7
-      dmpik(1) = 0.5d0 * pre * s * s
-      dmpik(3) = pre * s * ds
-      dmpik(5) = pre * (s*d2s + ds*ds)
-      dmpik(7) = pre * (s*d3s + 3.0d0*ds*d2s)
-      if (rorder .ge. 9) then
-         d4s = d4s * rr9
-         dmpik(9) = pre * (s*d4s + 4.0d0*ds*d3s + 3.0d0*d2s*d2s)
-         if (rorder .ge. 11) then
-            d5s = d5s * rr11
-            dmpik(11) = pre * (s*d5s + 5.0d0*ds*d4s + 10.0d0*d2s*d3s)
+      if (delS2R) then
+         pre3 = pre**3
+         s0s1 = s * ds * pre3
+         s0s2 = s * d2s * pre3
+         s0s3 = s * d3s * pre3
+         s1s1 = ds * ds * pre3
+         s1s2 = ds * d2s * pre3
+         f5 = s1s1 + s0s2
+         f7 = 3.0d0*s1s2 + s0s3
+         dmpik(1) = s * s * pre3
+         dmpik(3) = dmpik(1) - 2.0d0*s0s1*r
+         dmpik(5) = dmpik(3) + 2.0d0/3.0d0 * f5 * r2
+         dmpik(7) = dmpik(5) + 2.0d0/15.0d0 * f5 * r2
+     &                       - 2.0d0/15.0d0 * f7 * r3
+         if (rorder .ge. 9) then
+            s0s4 = s * d4s * pre3
+            s1s3 = ds * d3s * pre3
+            s2s2 = d2s * d2s * pre3
+            f9 = 3.0d0*s2s2 + 4.0d0*s1s3 + s0s4
+            dmpik(9) = dmpik(7) + 2.0d0/35.0d0 * f5 * r2
+     &                          - 2.0d0/35.0d0 * f7 * r3
+     &                          + 2.0d0/105.0d0 * f9 * r4
+            if (rorder .ge. 11) then
+               s0s5 = s * d5s * pre3
+               s1s4 = ds * d4s * pre3
+               s2s3 = d2s * d3s * pre3
+               f11 = 10.0d0*s2s3 + 5.0d0*s1s4 + s0s5
+               dmpik(11) = dmpik(9) + 2.0d0/63.0d0 * f5 * r2
+     &                              - 2.0d0/63.0d0 * f7 * r3
+     &                              + 4.0d0/315.0d0 * f9 * r4
+     &                              - 2.0d0/945.0d0 * f11 * r5
+            end if
+         end if
+c
+c     del(S2)/R model convert partial derivatives into full derivatives
+c
+      else
+         s = s * rr1
+         ds = ds * rr3
+         d2s = d2s * rr5
+         d3s = d3s * rr7
+         dmpik(1) = 0.5d0 * pre * s * s
+         dmpik(3) = pre * s * ds
+         dmpik(5) = pre * (s*d2s + ds*ds)
+         dmpik(7) = pre * (s*d3s + 3.0d0*ds*d2s)
+         if (rorder .ge. 9) then
+            d4s = d4s * rr9
+            dmpik(9) = pre * (s*d4s + 4.0d0*ds*d3s + 3.0d0*d2s*d2s)
+            if (rorder .ge. 11) then
+               d5s = d5s * rr11
+               dmpik(11) = pre * (s*d5s + 5.0d0*ds*d4s + 10.0d0*d2s*d3s)
+            end if
          end if
       end if
       return

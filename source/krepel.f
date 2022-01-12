@@ -42,6 +42,7 @@ c
 c     set the default values for repulsion variables
 c
       reppolar = .false.
+      delS2R = .false.
 c
 c     get keywords containing repulsion-related options
 c
@@ -52,6 +53,9 @@ c
          call upcase (keyword)
          if (keyword(1:12) .eq. 'REPEL-POLAR ') then
             reppolar = .true.
+         end if
+         if (keyword(1:7) .eq. 'DELS2R ') then
+            delS2R = .true.
          end if
       end do
 c
