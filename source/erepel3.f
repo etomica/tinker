@@ -108,6 +108,8 @@ c
       real*8 vali,valk
       real*8 dmpi,dmpk
       real*8 dmpik(9)
+      real*8 rr1ik,rr3ik,rr5ik
+      real*8 rr7ik,rr9ik
       real*8, allocatable :: rscale(:)
       logical proceed,usei
       logical muti,mutk,mutik
@@ -278,9 +280,14 @@ c
                   term4 = dir*qkr - dkr*qir - 4.0d0*qik
                   term5 = qir*qkr
                   if (delS2R) then
-                     eterm = term1*dmpik(1)*rr1 + term2*dmpik(3)*rr3
-     &                         + term3*dmpik(5)*rr5 + term4*dmpik(7)*rr7
-     &                         + term5*dmpik(9)*rr9
+                     rr1ik = dmpik(1)*rr1
+                     rr3ik = dmpik(3)*rr3
+                     rr5ik = dmpik(5)*rr5
+                     rr7ik = dmpik(7)*rr7
+                     rr9ik = dmpik(9)*rr9
+                     eterm = term1*rr1ik + term2*rr3ik 
+     &                     + term3*rr5ik + term4*rr7ik
+     &                     + term5*rr9ik
                   else
                      eterm = term1*dmpik(1) + term2*dmpik(3)
      &                          + term3*dmpik(5) + term4*dmpik(7)
@@ -505,9 +512,14 @@ c
                         term4 = dir*qkr - dkr*qir - 4.0d0*qik
                         term5 = qir*qkr
                         if (delS2R) then
-                           eterm = term1*dmpik(1)*rr1+term2*dmpik(3)*rr3
-     &                           + term3*dmpik(5)*rr5+term4*dmpik(7)*rr7
-     &                           + term5*dmpik(9)*rr9
+                           rr1ik = dmpik(1)*rr1
+                           rr3ik = dmpik(3)*rr3
+                           rr5ik = dmpik(5)*rr5
+                           rr7ik = dmpik(7)*rr7
+                           rr9ik = dmpik(9)*rr9
+                           eterm = term1*rr1ik + term2*rr3ik 
+     &                           + term3*rr5ik + term4*rr7ik
+     &                           + term5*rr9ik
                         else
                            eterm = term1*dmpik(1) + term2*dmpik(3)
      &                                + term3*dmpik(5) + term4*dmpik(7)
@@ -677,6 +689,8 @@ c
       real*8 vali,valk
       real*8 dmpi,dmpk
       real*8 dmpik(9)
+      real*8 rr1ik,rr3ik,rr5ik
+      real*8 rr7ik,rr9ik
       real*8, allocatable :: rscale(:)
       logical proceed,usei
       logical muti,mutk,mutik

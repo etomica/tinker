@@ -122,6 +122,8 @@ c
       real*8 ttri(3),ttrk(3)
       real*8 fix(3),fiy(3),fiz(3)
       real*8 dmpik(11)
+      real*8 rr1ik,rr3ik,rr5ik
+      real*8 rr7ik,rr9ik,rr11ik
       real*8, allocatable :: rscale(:)
       real*8, allocatable :: ter(:,:)
       logical proceed,usei
@@ -330,75 +332,149 @@ c
      &                       + 2.0d0*(dkqi-diqk+qiqk)
                   term4 = dir*qkr - dkr*qir - 4.0d0*qik
                   term5 = qir*qkr
-                  eterm = term1*dmpik(1) + term2*dmpik(3)
-     &                       + term3*dmpik(5) + term4*dmpik(7)
-     &                       + term5*dmpik(9)
+                  sizik = sizi * sizk * rscale(k)
+                  if (delS2R) then
 c
 c     compute the Pauli repulsion energy for this interaction
-c
-                  sizik = sizi * sizk * rscale(k)
-                  e = sizik * rscale(k) * eterm * rr1
-c
+c  
+                     rr1ik = dmpik(1)*rr1
+                     rr3ik = dmpik(3)*rr3
+                     rr5ik = dmpik(5)*rr5
+                     rr7ik = dmpik(7)*rr7
+                     rr9ik = dmpik(9)*rr9
+                     rr11ik = dmpik(11)*rr11
+                     eterm = term1*rr1ik + term2*rr3ik 
+     &                     + term3*rr5ik + term4*rr7ik
+     &                     + term5*rr9ik
+                     e = sizik * eterm
+c  
 c     calculate intermediate terms for force and torque
-c
-                  de = term1*dmpik(3) + term2*dmpik(5)
-     &                    + term3*dmpik(7) + term4*dmpik(9)
-     &                    + term5*dmpik(11)
-                  term1 = -valk*dmpik(3) + dkr*dmpik(5)
-     &                       - qkr*dmpik(7)
-                  term2 = vali*dmpik(3) + dir*dmpik(5)
-     &                       + qir*dmpik(7)
-                  term3 = 2.0d0 * dmpik(5)
-                  term4 = 2.0d0 * (-valk*dmpik(5) + dkr*dmpik(7)
-     &                                - qkr*dmpik(9))
-                  term5 = 2.0d0 * (-vali*dmpik(5) - dir*dmpik(7)
-     &                                - qir*dmpik(9))
-                  term6 = 4.0d0 * dmpik(7)
-c     
+c  
+                     de = term1*rr3ik + term2*rr5ik
+     &                       + term3*rr7ik + term4*rr9ik
+     &                       + term5*rr11ik
+                     term1 = -valk*rr3ik + dkr*rr5ik
+     &                          - qkr*rr7ik
+                     term2 = vali*rr3ik + dir*rr5ik
+     &                          + qir*rr7ik
+                     term3 = 2.0d0 * rr5ik
+                     term4 = 2.0d0 * (-valk*rr5ik + dkr*rr7ik
+     &                                   - qkr*rr9ik)
+                     term5 = 2.0d0 * (-vali*rr5ik - dir*rr7ik
+     &                                   - qir*rr9ik)
+                     term6 = 4.0d0 * rr7ik
+c        
 c     compute the force components for this interaction
-c     
-                  frcx = de*xr + term1*dix + term2*dkx
-     &                      + term3*(diqkx-dkqix) + term4*qix
-     &                      + term5*qkx + term6*(qixk+qkxi)
-                  frcy = de*yr + term1*diy + term2*dky
-     &                      + term3*(diqky-dkqiy) + term4*qiy
-     &                      + term5*qky + term6*(qiyk+qkyi)
-                  frcz = de*zr + term1*diz + term2*dkz
-     &                      + term3*(diqkz-dkqiz) + term4*qiz
-     &                      + term5*qkz + term6*(qizk+qkzi)
-                  frcx = frcx*rr1 + eterm*rr3*xr
-                  frcy = frcy*rr1 + eterm*rr3*yr
-                  frcz = frcz*rr1 + eterm*rr3*zr
-                  frcx = sizik * frcx
-                  frcy = sizik * frcy
-                  frcz = sizik * frcz
-c
+c        
+                     frcx = de*xr + term1*dix + term2*dkx
+     &                         + term3*(diqkx-dkqix) + term4*qix
+     &                         + term5*qkx + term6*(qixk+qkxi)
+                     frcy = de*yr + term1*diy + term2*dky
+     &                         + term3*(diqky-dkqiy) + term4*qiy
+     &                         + term5*qky + term6*(qiyk+qkyi)
+                     frcz = de*zr + term1*diz + term2*dkz
+     &                         + term3*(diqkz-dkqiz) + term4*qiz
+     &                         + term5*qkz + term6*(qizk+qkzi)
+                     frcx = sizik * frcx
+                     frcy = sizik * frcy
+                     frcz = sizik * frcz
+c  
 c     compute the torque components for this interaction
+c  
+                     ttri(1) = -rr3ik*dikx + term1*dirx
+     &                            + term3*(dqikx+dkqirx)
+     &                            - term4*qirx - term6*(qikrx+qikx)
+                     ttri(2) = -rr3ik*diky + term1*diry
+     &                            + term3*(dqiky+dkqiry)
+     &                            - term4*qiry - term6*(qikry+qiky)
+                     ttri(3) = -rr3ik*dikz + term1*dirz
+     &                            + term3*(dqikz+dkqirz)
+     &                            - term4*qirz - term6*(qikrz+qikz)
+                     ttrk(1) = rr3ik*dikx + term2*dkrx
+     &                            - term3*(dqikx+diqkrx)
+     &                            - term5*qkrx - term6*(qkirx-qikx)
+                     ttrk(2) = rr3ik*diky + term2*dkry
+     &                            - term3*(dqiky+diqkry)
+     &                            - term5*qkry - term6*(qkiry-qiky)
+                     ttrk(3) = rr3ik*dikz + term2*dkrz
+     &                            - term3*(dqikz+diqkrz)
+     &                            - term5*qkrz - term6*(qkirz-qikz)
+                     ttri(1) = sizik * ttri(1)
+                     ttri(2) = sizik * ttri(2)
+                     ttri(3) = sizik * ttri(3)
+                     ttrk(1) = sizik * ttrk(1)
+                     ttrk(2) = sizik * ttrk(2)
+                     ttrk(3) = sizik * ttrk(3)
+                  else
 c
-                  ttri(1) = -dmpik(3)*dikx + term1*dirx
-     &                         + term3*(dqikx+dkqirx)
-     &                         - term4*qirx - term6*(qikrx+qikx)
-                  ttri(2) = -dmpik(3)*diky + term1*diry
-     &                         + term3*(dqiky+dkqiry)
-     &                         - term4*qiry - term6*(qikry+qiky)
-                  ttri(3) = -dmpik(3)*dikz + term1*dirz
-     &                         + term3*(dqikz+dkqirz)
-     &                         - term4*qirz - term6*(qikrz+qikz)
-                  ttrk(1) = dmpik(3)*dikx + term2*dkrx
-     &                         - term3*(dqikx+diqkrx)
-     &                         - term5*qkrx - term6*(qkirx-qikx)
-                  ttrk(2) = dmpik(3)*diky + term2*dkry
-     &                         - term3*(dqiky+diqkry)
-     &                         - term5*qkry - term6*(qkiry-qiky)
-                  ttrk(3) = dmpik(3)*dikz + term2*dkrz
-     &                         - term3*(dqikz+diqkrz)
-     &                         - term5*qkrz - term6*(qkirz-qikz)
-                  ttri(1) = sizik * ttri(1) * rr1
-                  ttri(2) = sizik * ttri(2) * rr1
-                  ttri(3) = sizik * ttri(3) * rr1
-                  ttrk(1) = sizik * ttrk(1) * rr1
-                  ttrk(2) = sizik * ttrk(2) * rr1
-                  ttrk(3) = sizik * ttrk(3) * rr1
+c     compute the Pauli repulsion energy for this interaction
+c  
+                     eterm = term1*dmpik(1) + term2*dmpik(3)
+     &                          + term3*dmpik(5) + term4*dmpik(7)
+     &                          + term5*dmpik(9)
+                     e = sizik * eterm * rr1
+c  
+c     calculate intermediate terms for force and torque
+c  
+                     de = term1*dmpik(3) + term2*dmpik(5)
+     &                       + term3*dmpik(7) + term4*dmpik(9)
+     &                       + term5*dmpik(11)
+                     term1 = -valk*dmpik(3) + dkr*dmpik(5)
+     &                          - qkr*dmpik(7)
+                     term2 = vali*dmpik(3) + dir*dmpik(5)
+     &                          + qir*dmpik(7)
+                     term3 = 2.0d0 * dmpik(5)
+                     term4 = 2.0d0 * (-valk*dmpik(5) + dkr*dmpik(7)
+     &                                   - qkr*dmpik(9))
+                     term5 = 2.0d0 * (-vali*dmpik(5) - dir*dmpik(7)
+     &                                   - qir*dmpik(9))
+                     term6 = 4.0d0 * dmpik(7)
+c        
+c     compute the force components for this interaction
+c        
+                     frcx = de*xr + term1*dix + term2*dkx
+     &                         + term3*(diqkx-dkqix) + term4*qix
+     &                         + term5*qkx + term6*(qixk+qkxi)
+                     frcy = de*yr + term1*diy + term2*dky
+     &                         + term3*(diqky-dkqiy) + term4*qiy
+     &                         + term5*qky + term6*(qiyk+qkyi)
+                     frcz = de*zr + term1*diz + term2*dkz
+     &                         + term3*(diqkz-dkqiz) + term4*qiz
+     &                         + term5*qkz + term6*(qizk+qkzi)
+                     frcx = frcx*rr1 + eterm*rr3*xr
+                     frcy = frcy*rr1 + eterm*rr3*yr
+                     frcz = frcz*rr1 + eterm*rr3*zr
+                     frcx = sizik * frcx
+                     frcy = sizik * frcy
+                     frcz = sizik * frcz
+c  
+c     compute the torque components for this interaction
+c  
+                     ttri(1) = -dmpik(3)*dikx + term1*dirx
+     &                            + term3*(dqikx+dkqirx)
+     &                            - term4*qirx - term6*(qikrx+qikx)
+                     ttri(2) = -dmpik(3)*diky + term1*diry
+     &                            + term3*(dqiky+dkqiry)
+     &                            - term4*qiry - term6*(qikry+qiky)
+                     ttri(3) = -dmpik(3)*dikz + term1*dirz
+     &                            + term3*(dqikz+dkqirz)
+     &                            - term4*qirz - term6*(qikrz+qikz)
+                     ttrk(1) = dmpik(3)*dikx + term2*dkrx
+     &                            - term3*(dqikx+diqkrx)
+     &                            - term5*qkrx - term6*(qkirx-qikx)
+                     ttrk(2) = dmpik(3)*diky + term2*dkry
+     &                            - term3*(dqiky+diqkry)
+     &                            - term5*qkry - term6*(qkiry-qiky)
+                     ttrk(3) = dmpik(3)*dikz + term2*dkrz
+     &                            - term3*(dqikz+diqkrz)
+     &                            - term5*qkrz - term6*(qkirz-qikz)
+                     ttri(1) = sizik * ttri(1) * rr1
+                     ttri(2) = sizik * ttri(2) * rr1
+                     ttri(3) = sizik * ttri(3) * rr1
+                     ttrk(1) = sizik * ttrk(1) * rr1
+                     ttrk(2) = sizik * ttrk(2) * rr1
+                     ttrk(3) = sizik * ttrk(3) * rr1
+                  end if
 c
 c     scale the interaction based on its group membership
 c
@@ -691,75 +767,149 @@ c
      &                             + 2.0d0*(dkqi-diqk+qiqk)
                         term4 = dir*qkr - dkr*qir - 4.0d0*qik
                         term5 = qir*qkr
-                        eterm = term1*dmpik(1) + term2*dmpik(3)
-     &                             + term3*dmpik(5) + term4*dmpik(7)
-     &                             + term5*dmpik(9)
-c
+                        sizik = sizi * sizk * rscale(k)
+                        if (delS2R) then
+c     
 c     compute the Pauli repulsion energy for this interaction
-c
-                        sizik = sizi * sizk
-                        e = sizik * rscale(k) * eterm * rr1
-c
+c        
+                           rr1ik = dmpik(1)*rr1
+                           rr3ik = dmpik(3)*rr3
+                           rr5ik = dmpik(5)*rr5
+                           rr7ik = dmpik(7)*rr7
+                           rr9ik = dmpik(9)*rr9
+                           rr11ik = dmpik(11)*rr11
+                           eterm = term1*rr1ik + term2*rr3ik 
+     &                           + term3*rr5ik + term4*rr7ik
+     &                           + term5*rr9ik
+                           e = sizik * eterm 
+c        
 c     calculate intermediate terms for force and torque
-c
-                        de = term1*dmpik(3) + term2*dmpik(5)
-     &                          + term3*dmpik(7) + term4*dmpik(9)
-     &                          + term5*dmpik(11)
-                        term1 = -valk*dmpik(3) + dkr*dmpik(5)
-     &                             - qkr*dmpik(7)
-                        term2 = vali*dmpik(3) + dir*dmpik(5)
-     &                             + qir*dmpik(7)
-                        term3 = 2.0d0 * dmpik(5)
-                        term4 = 2.0d0 * (-valk*dmpik(5) + dkr*dmpik(7)
-     &                                      - qkr*dmpik(9))
-                        term5 = 2.0d0 * (-vali*dmpik(5) - dir*dmpik(7)
-     &                                      - qir*dmpik(9))
-                        term6 = 4.0d0 * dmpik(7)
-c
+c        
+                           de = term1*rr3ik + term2*rr5ik
+     &                             + term3*rr7ik + term4*rr9ik
+     &                             + term5*rr11ik
+                           term1 = -valk*rr3ik + dkr*rr5ik
+     &                                - qkr*rr7ik
+                           term2 = vali*rr3ik + dir*rr5ik
+     &                                + qir*rr7ik
+                           term3 = 2.0d0 * rr5ik
+                           term4 = 2.0d0 * (-valk*rr5ik + dkr*rr7ik
+     &                                         - qkr*rr9ik)
+                           term5 = 2.0d0 * (-vali*rr5ik - dir*rr7ik
+     &                                         - qir*rr9ik)
+                           term6 = 4.0d0 * rr7ik
+c              
 c     compute the force components for this interaction
-c
-                        frcx = de*xr + term1*dix + term2*dkx
-     &                            + term3*(diqkx-dkqix) + term4*qix
-     &                            + term5*qkx + term6*(qixk+qkxi)
-                        frcy = de*yr + term1*diy + term2*dky
-     &                            + term3*(diqky-dkqiy) + term4*qiy
-     &                            + term5*qky + term6*(qiyk+qkyi)
-                        frcz = de*zr + term1*diz + term2*dkz
-     &                            + term3*(diqkz-dkqiz) + term4*qiz
-     &                            + term5*qkz + term6*(qizk+qkzi)
-                        frcx = frcx*rr1 + eterm*rr3*xr
-                        frcy = frcy*rr1 + eterm*rr3*yr
-                        frcz = frcz*rr1 + eterm*rr3*zr
-                        frcx = sizik * frcx
-                        frcy = sizik * frcy
-                        frcz = sizik * frcz
-c
+c              
+                           frcx = de*xr + term1*dix + term2*dkx
+     &                               + term3*(diqkx-dkqix) + term4*qix
+     &                               + term5*qkx + term6*(qixk+qkxi)
+                           frcy = de*yr + term1*diy + term2*dky
+     &                               + term3*(diqky-dkqiy) + term4*qiy
+     &                               + term5*qky + term6*(qiyk+qkyi)
+                           frcz = de*zr + term1*diz + term2*dkz
+     &                               + term3*(diqkz-dkqiz) + term4*qiz
+     &                               + term5*qkz + term6*(qizk+qkzi)
+                           frcx = sizik * frcx
+                           frcy = sizik * frcy
+                           frcz = sizik * frcz
+c        
 c     compute the torque components for this interaction
-c
-                        ttri(1) = -dmpik(3)*dikx + term1*dirx
-     &                               + term3*(dqikx+dkqirx)
-     &                               - term4*qirx - term6*(qikrx+qikx)
-                        ttri(2) = -dmpik(3)*diky + term1*diry
-     &                               + term3*(dqiky+dkqiry)
-     &                               - term4*qiry - term6*(qikry+qiky)
-                        ttri(3) = -dmpik(3)*dikz + term1*dirz
-     &                               + term3*(dqikz+dkqirz)
-     &                               - term4*qirz - term6*(qikrz+qikz)
-                        ttrk(1) = dmpik(3)*dikx + term2*dkrx
-     &                               - term3*(dqikx+diqkrx)
-     &                               - term5*qkrx - term6*(qkirx-qikx)
-                        ttrk(2) = dmpik(3)*diky + term2*dkry
-     &                               - term3*(dqiky+diqkry)
-     &                               - term5*qkry - term6*(qkiry-qiky)
-                        ttrk(3) = dmpik(3)*dikz + term2*dkrz
-     &                               - term3*(dqikz+diqkrz)
-     &                               - term5*qkrz - term6*(qkirz-qikz)
-                        ttri(1) = sizik * ttri(1) * rr1
-                        ttri(2) = sizik * ttri(2) * rr1
-                        ttri(3) = sizik * ttri(3) * rr1
-                        ttrk(1) = sizik * ttrk(1) * rr1
-                        ttrk(2) = sizik * ttrk(2) * rr1
-                        ttrk(3) = sizik * ttrk(3) * rr1
+c        
+                           ttri(1) = -rr3ik*dikx + term1*dirx
+     &                                 + term3*(dqikx+dkqirx)
+     &                                 - term4*qirx - term6*(qikrx+qikx)
+                           ttri(2) = -rr3ik*diky + term1*diry
+     &                                 + term3*(dqiky+dkqiry)
+     &                                 - term4*qiry - term6*(qikry+qiky)
+                           ttri(3) = -rr3ik*dikz + term1*dirz
+     &                                 + term3*(dqikz+dkqirz)
+     &                                 - term4*qirz - term6*(qikrz+qikz)
+                           ttrk(1) = rr3ik*dikx + term2*dkrx
+     &                                 - term3*(dqikx+diqkrx)
+     &                                 - term5*qkrx - term6*(qkirx-qikx)
+                           ttrk(2) = rr3ik*diky + term2*dkry
+     &                                 - term3*(dqiky+diqkry)
+     &                                 - term5*qkry - term6*(qkiry-qiky)
+                           ttrk(3) = rr3ik*dikz + term2*dkrz
+     &                                 - term3*(dqikz+diqkrz)
+     &                                 - term5*qkrz - term6*(qkirz-qikz)
+                           ttri(1) = sizik * ttri(1)
+                           ttri(2) = sizik * ttri(2)
+                           ttri(3) = sizik * ttri(3)
+                           ttrk(1) = sizik * ttrk(1)
+                           ttrk(2) = sizik * ttrk(2)
+                           ttrk(3) = sizik * ttrk(3)
+                        else
+                           eterm = term1*dmpik(1) + term2*dmpik(3)
+     &                                + term3*dmpik(5) + term4*dmpik(7)
+     &                                + term5*dmpik(9)
+c  
+c     compute the Pauli repulsion energy for this interaction
+c  
+                           e = sizik * eterm * rr1
+c  
+c     calculate intermediate terms for force and torque
+c  
+                           de = term1*dmpik(3) + term2*dmpik(5)
+     &                             + term3*dmpik(7) + term4*dmpik(9)
+     &                             + term5*dmpik(11)
+                           term1 = -valk*dmpik(3) + dkr*dmpik(5)
+     &                                - qkr*dmpik(7)
+                           term2 = vali*dmpik(3) + dir*dmpik(5)
+     &                                + qir*dmpik(7)
+                           term3 = 2.0d0 * dmpik(5)
+                           term4 = 2.0d0 * (-valk*dmpik(5)+dkr*dmpik(7)
+     &                                         - qkr*dmpik(9))
+                           term5 = 2.0d0 * (-vali*dmpik(5)-dir*dmpik(7)
+     &                                         - qir*dmpik(9))
+                           term6 = 4.0d0 * dmpik(7)
+c  
+c     compute the force components for this interaction
+c  
+                           frcx = de*xr + term1*dix + term2*dkx
+     &                               + term3*(diqkx-dkqix) + term4*qix
+     &                               + term5*qkx + term6*(qixk+qkxi)
+                           frcy = de*yr + term1*diy + term2*dky
+     &                               + term3*(diqky-dkqiy) + term4*qiy
+     &                               + term5*qky + term6*(qiyk+qkyi)
+                           frcz = de*zr + term1*diz + term2*dkz
+     &                               + term3*(diqkz-dkqiz) + term4*qiz
+     &                               + term5*qkz + term6*(qizk+qkzi)
+                           frcx = frcx*rr1 + eterm*rr3*xr
+                           frcy = frcy*rr1 + eterm*rr3*yr
+                           frcz = frcz*rr1 + eterm*rr3*zr
+                           frcx = sizik * frcx
+                           frcy = sizik * frcy
+                           frcz = sizik * frcz
+c  
+c     compute the torque components for this interaction
+c  
+                           ttri(1) = -dmpik(3)*dikx + term1*dirx
+     &                                 + term3*(dqikx+dkqirx)
+     &                                 - term4*qirx - term6*(qikrx+qikx)
+                           ttri(2) = -dmpik(3)*diky + term1*diry
+     &                                 + term3*(dqiky+dkqiry)
+     &                                 - term4*qiry - term6*(qikry+qiky)
+                           ttri(3) = -dmpik(3)*dikz + term1*dirz
+     &                                 + term3*(dqikz+dkqirz)
+     &                                 - term4*qirz - term6*(qikrz+qikz)
+                           ttrk(1) = dmpik(3)*dikx + term2*dkrx
+     &                                 - term3*(dqikx+diqkrx)
+     &                                 - term5*qkrx - term6*(qkirx-qikx)
+                           ttrk(2) = dmpik(3)*diky + term2*dkry
+     &                                 - term3*(dqiky+diqkry)
+     &                                 - term5*qkry - term6*(qkiry-qiky)
+                           ttrk(3) = dmpik(3)*dikz + term2*dkrz
+     &                                 - term3*(dqikz+diqkrz)
+     &                                 - term5*qkrz - term6*(qkirz-qikz)
+                           ttri(1) = sizik * ttri(1) * rr1
+                           ttri(2) = sizik * ttri(2) * rr1
+                           ttri(3) = sizik * ttri(3) * rr1
+                           ttrk(1) = sizik * ttrk(1) * rr1
+                           ttrk(2) = sizik * ttrk(2) * rr1
+                           ttrk(3) = sizik * ttrk(3) * rr1
+                        end if
 c
 c     scale the interaction based on its group membership
 c

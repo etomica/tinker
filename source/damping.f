@@ -769,7 +769,7 @@ c
          r5 = r4 * r
          r6 = r5 * r
 c
-c        treat the case where alpha damping exponents are equal
+c     treat the case where alpha damping exponents are equal
 c
          if (diff .lt. eps) then
             pre = dmpi * dmpi
@@ -791,7 +791,7 @@ c
                end if
             end if
 c  
-c        treat the case where alpha damping exponents are unequal
+c     treat the case where alpha damping exponents are unequal
 c  
          else
             pre = dmpi * dmpk
@@ -847,7 +847,7 @@ c     del(S2)/R model
 c
       else
 c
-c        treat the case where alpha damping exponents are equal
+c     treat the case where alpha damping exponents are equal
 c
          if (diff .lt. eps) then
             r3 = r2 * r
@@ -878,7 +878,7 @@ c
                end if
             end if
 c  
-c        treat the case where alpha damping exponents are unequal
+c     treat the case where alpha damping exponents are unequal
 c  
          else
             r3 = r2 * r
