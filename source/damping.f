@@ -763,10 +763,6 @@ c
 c     del(S2/R) model
 c
       if (delS2R) then
-         r3 = r2 * r
-         r4 = r3 * r
-         r5 = r4 * r
-         r6 = r5 * r
 c
 c     treat the case where alpha damping exponents are equal
 c
