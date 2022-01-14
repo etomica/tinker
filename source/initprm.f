@@ -35,6 +35,7 @@ c
       use kctrn
       use kdipol
       use kdsp
+      use kexnd
       use khbond
       use kiprop
       use kitors
@@ -213,6 +214,9 @@ c
       if (.not. allocated(prsiz))  allocate (prsiz(maxclass))
       if (.not. allocated(prdmp))  allocate (prdmp(maxclass))
       if (.not. allocated(prele))  allocate (prele(maxclass))
+      if (.not. allocated(peisiz))  allocate (peisiz(maxclass))
+      if (.not. allocated(peidmp))  allocate (peidmp(maxclass))
+      if (.not. allocated(peiele))  allocate (peiele(maxclass))
       if (.not. allocated(dspsix))  allocate (dspsix(maxclass))
       if (.not. allocated(dspdmp))  allocate (dspdmp(maxclass))
       if (.not. allocated(chg))  allocate (chg(maxtyp))
@@ -268,6 +272,9 @@ c
          prsiz(i) = 0.0d0
          prdmp(i) = 0.0d0
          prele(i) = 0.0d0
+         peisiz(i) = 0.0d0
+         peidmp(i) = 0.0d0
+         peiele(i) = 0.0d0
          dspsix(i) = 0.0d0
          dspdmp(i) = 0.0d0
          cpele(i) = 0.0d0
@@ -393,6 +400,14 @@ c
       p3iscale = 0.0d0
       p4iscale = 0.5d0
       p5iscale = 1.0d0
+      pr2scale = 0.0d0
+      pr3scale = 0.5d0
+      pr4scale = 1.0d0
+      pr5scale = 1.0d0
+      pr2iscale = 0.0d0
+      pr3iscale = 0.0d0
+      pr4iscale = 0.0d0
+      pr5iscale = 0.5d0
       u1scale = 1.0d0
       u2scale = 1.0d0
       u3scale = 1.0d0
@@ -401,11 +416,16 @@ c
       w3scale = 1.0d0
       w4scale = 1.0d0
       w5scale = 1.0d0
+      wr2scale = 0.2d0
+      wr3scale = 1.0d0
+      wr4scale = 1.0d0
+      wr5scale = 1.0d0
       use_thole = .true.
       use_dirdamp = .false.
       use_pred = .false.
       use_ielscf = .false.
       dpequal = .false.
+      use_exind = .true.
 c
 c     set default control parameters for charge transfer terms
 c

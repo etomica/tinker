@@ -1035,3 +1035,171 @@ c
       end if
       return
       end
+c
+c
+c     ################################################################
+c     ##                                                            ##
+c     ##  subroutine damprmut  --  mutual repulsive field damping   ##
+c     ##                                                            ##
+c     ################################################################
+c
+c
+c     "damprmut" finds coefficients for mutual repulsive field damping
+c     function used by HIPPO
+c
+c
+      subroutine damprmut (r,r2,rr1,rr3,rr5,dmpi,dmpk,dmpik)
+      use reppot
+      implicit none
+      real*8 r,r2,r3,r4,r5
+      real*8 rr1,rr3,rr5
+      real*8 s,ds,d2s
+      real*8 dmpi,dmpk
+      real*8 dmpi2,dmpk2
+      real*8 dmpi22,dmpi23
+      real*8 dmpi24
+      real*8 dmpk22,dmpk23
+      real*8 eps,diff
+      real*8 expi,expk
+      real*8 pre,term,tmp
+      real*8 dmpik(*)
+      real*8 dampi,dampk
+      real*8 dampi2
+      real*8 dampk2
+      real*8 pi1,pi2
+      real*8 pk1,pk2
+      real*8 term3, pik
+      real*8 s0s0,s0s1,s0s2
+      real*8 s1s1
+      real*8 c
+c
+c
+c     compute tolerance value for damping exponents
+c
+      eps = 0.001d0
+      diff = abs(dmpi-dmpk)
+c
+c     del(S2/R) model
+c
+      if (delS2R) then
+c
+c     treat the case where alpha damping exponents are equal
+c
+         if (diff .lt. eps) then
+            c = 1
+            dmpi2 = 0.5d0 * dmpi
+            dampi = dmpi2 * r
+            dampi2 = dampi * dampi
+            expi = exp(-dampi)
+            s = (1.0d0 + dampi + dampi2/3.0d0) * expi
+            ds = -dampi2 * (1.0d0 + dampi) * expi / 3.0d0
+            d2s = -dampi2 * (1.0d0 + dampi - dampi2) * expi / 9.0d0
+c  
+c     treat the case where alpha damping exponents are unequal
+c  
+         else
+            dmpi2 = 0.5d0 * dmpi
+            dmpk2 = 0.5d0 * dmpk
+            dmpi22 = dmpi2 * dmpi2
+            dmpk22 = dmpk2 * dmpk2
+            dampi = dmpi2 * r
+            dampk = dmpk2 * r
+            dampi2 = dampi * dampi
+            dampk2 = dampk * dampk
+            expi = exp(-dampi)
+            expk = exp(-dampk)
+            term = dmpi22 - dmpk22
+            term3 = term**3
+            pik = term * r2 / 4.0d0
+            pi1 = 1 + dampi
+            pi2 = pi1 + dampi2 / 2.0d0
+            pk1 = 1 + dampk
+            pk2 = pk1 + dampk2 / 2.0d0
+            c = dmpi * dmpk / (dmpi2 + dmpk2)**2
+            c = c**3
+            pre = dmpi * dmpk * (dmpi2 + dmpk2)**3 / (term3 * r)
+            s = pre * ((term * r / dmpi + 2.0d0) * expi
+     &           + (term * r / dmpk - 2.0d0) * expk) 
+     &           / 2.0d0
+            ds = -pre * ((pi1 + pik) * expi - (pk1 - pik) * expk)
+            d2s = 2.0d0 * pre * ((pi2 + pik*dampi/2.0d0) * expi 
+     &              - (pk2 - pik*dampk/2.0d0) * expk) / 3.0d0
+         end if
+c
+c     del(S2)/R model
+c
+      else
+c
+c     treat the case where alpha damping exponents are equal
+c
+         if (diff .lt. eps) then
+            r3 = r2 * r
+            r4 = r3 * r
+            r5 = r4 * r
+            dmpi2 = 0.5d0 * dmpi
+            dampi = dmpi2 * r
+            expi = exp(-dampi)
+            dmpi22 = dmpi2 * dmpi2
+            dmpi23 = dmpi22 * dmpi2
+            dmpi24 = dmpi23 * dmpi2
+            pre = 2.0d0
+            s = (r + dmpi2*r2 + dmpi22*r3/3.0d0) * expi
+            ds = (dmpi22*r3 + dmpi23*r4) * expi / 3.0d0
+            d2s = dmpi24 * expi * r5 / 9.0d0
+c  
+c     treat the case where alpha damping exponents are unequal
+c  
+         else
+            r3 = r2 * r
+            dmpi2 = 0.5d0 * dmpi
+            dmpk2 = 0.5d0 * dmpk
+            dampi = dmpi2 * r
+            dampk = dmpk2 * r
+            expi = exp(-dampi)
+            expk = exp(-dampk)
+            dmpi22 = dmpi2 * dmpi2
+            dmpi23 = dmpi22 * dmpi2
+            dmpk22 = dmpk2 * dmpk2
+            dmpk23 = dmpk22 * dmpk2
+            term = dmpi22 - dmpk22
+            pre = 128.0d0 * dmpi23 * dmpk23 / term**4
+            tmp = 4.0d0 * dmpi2 * dmpk2 / term
+            s = (dampi-tmp)*expk + (dampk+tmp)*expi
+            ds = (dmpi2*dmpk2*r2 - 4.0d0*dmpi2*dmpk22*r/term
+     &               - 4.0d0*dmpi2*dmpk2/term) * expk
+     &         + (dmpi2*dmpk2*r2 + 4.0d0*dmpi22*dmpk2*r/term
+     &               + 4.0d0*dmpi2*dmpk2/term) * expi
+            d2s = (dmpi2*dmpk2*r2/3.0d0
+     &                + dmpi2*dmpk22*r3/3.0d0
+     &                - (4.0d0/3.0d0)*dmpi2*dmpk23*r2/term
+     &                - 4.0d0*dmpi2*dmpk22*r/term
+     &                - 4.0d0*dmpi2*dmpk2/term) * expk
+     &          + (dmpi2*dmpk2*r2/3.0d0
+     &                + dmpi22*dmpk2*r3/3.0d0
+     &                + (4.0d0/3.0d0)*dmpi23*dmpk2*r2/term
+     &                + 4.0d0*dmpi22*dmpk2*r/term
+     &                + 4.0d0*dmpi2*dmpk2/term) * expi
+         end if
+      end if
+c
+c     del(S2/R) model convert partial derivatives into full derivatives
+c
+      if (delS2R) then
+         s0s0 = c * s * s
+         s0s1 = c * s * ds
+         s0s2 = c * s * d2s
+         s1s1 = c * ds * ds
+         dmpik(3) = s0s0 - 2.0d0*s0s1
+         dmpik(5) = dmpik(3) + 2.0d0/3.0d0 * (s1s1 + 3.0d0*s0s2)
+c
+c     del(S2)/R model convert partial derivatives into full derivatives
+c
+      else
+         s = s * rr1
+         ds = ds * rr3
+         d2s = d2s * rr5
+         dmpik(3) = pre * s * ds
+         dmpik(5) = pre * (s*d2s + ds*ds)
+      end if
+      return
+      end

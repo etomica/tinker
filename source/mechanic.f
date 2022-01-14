@@ -104,6 +104,10 @@ c
       call krepel
       call kdisp
 c
+c     assign exchange induction parameters
+c
+      call kexind
+c
 c     assign solvation, metal, pisystem and restraint parameters
 c
       call ksolv
