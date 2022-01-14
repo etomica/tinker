@@ -600,6 +600,8 @@ c
       real*8 vali,valk
       real*8 dmpi,dmpk
       real*8 dmpik(9)
+      real*8 rr1ik,rr3ik,rr5ik
+      real*8 rr7ik,rr9ik
       real*8, allocatable :: rscale(:)
       logical proceed,usei
       logical muti,mutk,mutik
@@ -640,7 +642,7 @@ c
 !$OMP& shared(npole,ipole,x,y,z,sizpr,dmppr,elepr,rpole,uind,n12,
 !$OMP& i12,n13,i13,n14,i14,n15,i15,r2scale,r3scale,r4scale,r5scale,
 !$OMP& nelst,elst,use,use_group,use_intra,use_bounds,reppolar,
-!$OMP& vcouple,vlambda,mut,cut2,off2,c0,c1,c2,c3,c4,c5)
+!$OMP& vcouple,vlambda,mut,cut2,off2,c0,c1,c2,c3,c4,c5,delS2R)
 !$OMP& firstprivate(rscale)
 !$OMP& shared (er)
 !$OMP DO reduction(+:er) schedule(guided)
@@ -765,9 +767,20 @@ c
      &                       + 2.0d0*(dkqi-diqk+qiqk)
                   term4 = dir*qkr - dkr*qir - 4.0d0*qik
                   term5 = qir*qkr
-                  eterm = term1*dmpik(1) + term2*dmpik(3)
-     &                       + term3*dmpik(5) + term4*dmpik(7)
-     &                       + term5*dmpik(9)
+                  if (delS2R) then
+                     rr1ik = dmpik(1)*rr1
+                     rr3ik = dmpik(3)*rr3
+                     rr5ik = dmpik(5)*rr5
+                     rr7ik = dmpik(7)*rr7
+                     rr9ik = dmpik(9)*rr9
+                     eterm = term1*rr1ik + term2*rr3ik 
+     &                     + term3*rr5ik + term4*rr7ik
+     &                     + term5*rr9ik
+                  else
+                     eterm = term1*dmpik(1) + term2*dmpik(3)
+     &                          + term3*dmpik(5) + term4*dmpik(7)
+     &                          + term5*dmpik(9)
+                  end if
                   sizik = sizi * sizk
 c
 c     set use of lambda scaling for decoupling or annihilation
@@ -783,11 +796,15 @@ c
 c
 c     get interaction energy, via soft core lambda scaling as needed
 c
-                  if (mutik) then
-                     e = vlambda * sizik * rscale(k) * eterm
-     &                      / sqrt(1.0d0-vlambda+r2)
+                  if (delS2R) then
+                     e = sizik * rscale(k) * eterm
                   else
-                     e = sizik * rscale(k) * eterm * rr1
+                     if (mutik) then
+                        e = vlambda * sizik * rscale(k) * eterm
+     &                         / sqrt(1.0d0-vlambda+r2)
+                     else
+                        e = sizik * rscale(k) * eterm * rr1
+                     end if
                   end if
 c
 c     use energy switching if near the cutoff distance
