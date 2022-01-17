@@ -1026,42 +1026,59 @@ c
                vali = pval(ii)
                alphai = palpha(ii)
             end if
+            if (use_exind) then
+            rsizi = sizpei(ii) / f
+            rdmpi = dmppei(ii)
+            rvali = elepei(ii)
+         end if
 c
 c     set exclusion coefficients for connected atoms
 c
-            if (dpequal) then
-               do j = 1, n12(i)
-                  pscale(i12(j,i)) = p2scale
-                  do k = 1, np11(i)
-                     if (i12(j,i) .eq. ip11(k,i))
-     &                  pscale(i12(j,i)) = p2iscale
-                  end do
-                  dscale(i12(j,i)) = pscale(i12(j,i))
+         if (dpequal) then
+            do j = 1, n12(i)
+               pscale(i12(j,i)) = p2scale
+               prscale(i12(j,i)) = pr2scale
+               do k = 1, np11(i)
+                  if (i12(j,i) .eq. ip11(k,i)) then
+                     pscale(i12(j,i)) = p2iscale
+                     prscale(i12(j,i)) = pr2iscale
+                  end if
                end do
-               do j = 1, n13(i)
-                  pscale(i13(j,i)) = p3scale
-                  do k = 1, np11(i)
-                     if (i13(j,i) .eq. ip11(k,i))
-     &                  pscale(i13(j,i)) = p3iscale
-                  end do
-                  dscale(i13(j,i)) = pscale(i13(j,i))
+               dscale(i12(j,i)) = pscale(i12(j,i))
+            end do
+            do j = 1, n13(i)
+               pscale(i13(j,i)) = p3scale
+               prscale(i13(j,i)) = pr3scale
+               do k = 1, np11(i)
+                  if (i13(j,i) .eq. ip11(k,i)) then
+                     pscale(i13(j,i)) = p3iscale
+                     prscale(i13(j,i)) = pr3iscale
+                  end if
                end do
-               do j = 1, n14(i)
-                  pscale(i14(j,i)) = p4scale
-                  do k = 1, np11(i)
-                     if (i14(j,i) .eq. ip11(k,i))
-     &                  pscale(i14(j,i)) = p4iscale
-                  end do
-                  dscale(i14(j,i)) = pscale(i14(j,i))
+               dscale(i13(j,i)) = pscale(i13(j,i))
+            end do
+            do j = 1, n14(i)
+               pscale(i14(j,i)) = p4scale
+               prscale(i14(j,i)) = pr4scale
+               do k = 1, np11(i)
+                  if (i14(j,i) .eq. ip11(k,i)) then
+                     pscale(i14(j,i)) = p4iscale
+                     prscale(i14(j,i)) = pr4iscale
+                  end if
                end do
-               do j = 1, n15(i)
-                  pscale(i15(j,i)) = p5scale
-                  do k = 1, np11(i)
-                     if (i15(j,i) .eq. ip11(k,i))
-     &                  pscale(i15(j,i)) = p5iscale
-                  end do
-                  dscale(i15(j,i)) = pscale(i15(j,i))
+               dscale(i14(j,i)) = pscale(i14(j,i))
+            end do
+            do j = 1, n15(i)
+               pscale(i15(j,i)) = p5scale
+               prscale(i15(j,i)) = pr5scale
+               do k = 1, np11(i)
+                  if (i15(j,i) .eq. ip11(k,i)) then
+                     pscale(i15(j,i)) = p5iscale
+                     prscale(i15(j,i)) = pr5iscale
+                  end if
                end do
+               dscale(i15(j,i)) = pscale(i15(j,i))
+            end do
             else
                do j = 1, n12(i)
                   pscale(i12(j,i)) = p2scale
@@ -1197,6 +1214,63 @@ c
      &                              - rr3i*diz - 2.0d0*rr5i*qiz
                      end if
 c
+c     find the field components due to repulsion
+c
+                     if (use_exind) then
+                        rsizk = sizpei(kk) / f
+                        rdmpk = dmppei(kk)
+                        rvalk = elepei(kk)
+                        rsizik = rsizi*rsizk
+                        rr1 = 1.0d0 / r
+                        rr3 = 1.0d0 / (r*r2)
+                        rr5 = 3.0d0 * rr3 / r2
+                        rr7 = 5.0d0 * rr5 / r2
+                        call damprep (r,r2,rr1,rr3,rr5,rr7,rr9,rr11,
+     &                                  7,rdmpi,rdmpk,rdmpik)
+                        if (delS2R) then
+                           rrr3ik = rdmpik(3) * rr3
+                           rrr5ik = rdmpik(5) * rr5
+                           rrr7ik = rdmpik(7) * rr7
+                           frid(1) = rsizik*(-xr*(rrr3ik*rvalk
+     &                              - rrr5ik*dkr + rrr7ik*qkr)
+     &                              - rrr3ik*dkx + 2.0d0*rrr5ik*qkx)
+                           frid(2) = rsizik*(-yr*(rrr3ik*rvalk
+     &                              - rrr5ik*dkr + rrr7ik*qkr)
+     &                              - rrr3ik*dky + 2.0d0*rrr5ik*qky)
+                           frid(3) = rsizik*(-zr*(rrr3ik*rvalk
+     &                              - rrr5ik*dkr + rrr7ik*qkr)
+     &                              - rrr3ik*dkz + 2.0d0*rrr5ik*qkz)
+                           frkd(1) = rsizik*(xr*(rrr3ik*rvali
+     &                              + rrr5ik*dir + rrr7ik*qir)
+     &                              - rrr3ik*dix - 2.0d0*rrr5ik*qix)
+                           frkd(2) = rsizik*(yr*(rrr3ik*rvali
+     &                              + rrr5ik*dir + rrr7ik*qir)
+     &                              - rrr3ik*diy - 2.0d0*rrr5ik*qiy)
+                           frkd(3) = rsizik*(zr*(rrr3ik*rvali
+     &                              + rrr5ik*dir + rrr7ik*qir)
+     &                              - rrr3ik*diz - 2.0d0*rrr5ik*qiz)
+                        else
+                           frid(1) = rsizik*(-xr*(rdmpik(3)*rvalk
+     &                        - rdmpik(5)*dkr + rdmpik(7)*qkr)
+     &                        - rdmpik(3)*dkx + 2.0d0*rdmpik(5)*qkx)*rr1
+                           frid(2) = rsizik*(-yr*(rdmpik(3)*rvalk
+     &                        - rdmpik(5)*dkr + rdmpik(7)*qkr)
+     &                        - rdmpik(3)*dky + 2.0d0*rdmpik(5)*qky)*rr1
+                           frid(3) = rsizik*(-zr*(rdmpik(3)*rvalk
+     &                        - rdmpik(5)*dkr + rdmpik(7)*qkr)
+     &                        - rdmpik(3)*dkz + 2.0d0*rdmpik(5)*qkz)*rr1
+                           frkd(1) = rsizik*(xr*(rdmpik(3)*rvali
+     &                        + rdmpik(5)*dir + rdmpik(7)*qir)
+     &                        - rdmpik(3)*dix - 2.0d0*rdmpik(5)*qix)*rr1
+                           frkd(2) = rsizik*(yr*(rdmpik(3)*rvali
+     &                        + rdmpik(5)*dir + rdmpik(7)*qir)
+     &                        - rdmpik(3)*diy - 2.0d0*rdmpik(5)*qiy)*rr1
+                           frkd(3) = rsizik*(zr*(rdmpik(3)*rvali
+     &                        + rdmpik(5)*dir + rdmpik(7)*qir)
+     &                        - rdmpik(3)*diz - 2.0d0*rdmpik(5)*qiz)*rr1
+                        end if
+                     end if
+c
 c     increment the direct electrostatic field components
 c
                      do j = 1, 3
@@ -1209,14 +1283,16 @@ c
                            fip(j) = fip(j) * pscale(k)
                            fkd(j) = fkd(j) * dscale(k)
                            fkp(j) = fkp(j) * pscale(k)
+                           frid(j) = frid(j) * prscale(k)
+                           frkd(j) = frkd(j) * prscale(k)
                         end do
                      end if
                      do j = 1, 3
-                        field(j,ii) = field(j,ii) + fid(j)
-                        fieldp(j,ii) = fieldp(j,ii) + fip(j)
+                        field(j,ii) = field(j,ii) + fid(j) + frid(j)
+                        fieldp(j,ii) = fieldp(j,ii) + fip(j) + frid(j)
                         if (i .ne. k) then
-                           field(j,kk) = field(j,kk) + fkd(j)
-                           fieldp(j,kk) = fieldp(j,kk) + fkp(j)
+                           field(j,kk) = field(j,kk) + fkd(j) + frkd(j)
+                           fieldp(j,kk) = fieldp(j,kk) + fkp(j) +frkd(j)
                         end if
                      end do
                   end if
@@ -1228,18 +1304,22 @@ c
             if (dpequal) then
                do j = 1, n12(i)
                   pscale(i12(j,i)) = 1.0d0
+                  prscale(i12(j,i)) = 1.0d0
                   dscale(i12(j,i)) = 1.0d0
                end do
                do j = 1, n13(i)
                   pscale(i13(j,i)) = 1.0d0
+                  prscale(i13(j,i)) = 1.0d0
                   dscale(i13(j,i)) = 1.0d0
                end do
                do j = 1, n14(i)
                   pscale(i14(j,i)) = 1.0d0
+                  prscale(i14(j,i)) = 1.0d0
                   dscale(i14(j,i)) = 1.0d0
                end do
                do j = 1, n15(i)
                   pscale(i15(j,i)) = 1.0d0
+                  prscale(i15(j,i)) = 1.0d0
                   dscale(i15(j,i)) = 1.0d0
                end do
             else
@@ -1599,6 +1679,10 @@ c
                vali = pval(ii)
                alphai = palpha(ii)
             end if
+            if (use_exind) then
+               rsizi = sizpei(ii) / f
+               rdmpi = dmppei(ii)
+            end if
 c
 c     set exclusion coefficients for connected atoms
 c
@@ -1616,15 +1700,19 @@ c
             end do
             do j = 1, n12(i)
                wscale(i12(j,i)) = w2scale
+               wrscale(i12(j,i)) = wr2scale
             end do
             do j = 1, n13(i)
                wscale(i13(j,i)) = w3scale
+               wrscale(i13(j,i)) = wr3scale
             end do
             do j = 1, n14(i)
                wscale(i14(j,i)) = w4scale
+               wrscale(i14(j,i)) = wr4scale
             end do
             do j = 1, n15(i)
                wscale(i15(j,i)) = w5scale
+               wrscale(i15(j,i)) = wr5scale
             end do
 c
 c     evaluate all sites within the cutoff distance
@@ -1687,6 +1775,60 @@ c
                      fkp(1) = rr3*pix + rr5*pir*xr
                      fkp(2) = rr3*piy + rr5*pir*yr
                      fkp(3) = rr3*piz + rr5*pir*zr
+c
+c     increment the mutual repulsive field components
+c
+                     if (use_exind) then
+                        rsizk = sizpei(kk) / f
+                        rdmpk = dmppei(kk)
+                        rr1 = 1.0d0 / r
+                        rr3 = rr1 / r2
+                        rr5 = 3.0d0 * rr3 / r2
+                        call damprmut (r,r2,rr1,rr3,rr5,
+     &                                    rdmpi,rdmpk,rdmpik)
+                        rsizik = rsizi*rsizk
+                        if (delS2R) then
+                           rrr3ik = rdmpik(3) * rr3
+                           rrr5ik = rdmpik(5) * rr5
+                           frid(1) = rsizik*(xr*rrr5ik*dkr - rrr3ik*dkx)
+                           frid(2) = rsizik*(yr*rrr5ik*dkr - rrr3ik*dky)
+                           frid(3) = rsizik*(zr*rrr5ik*dkr - rrr3ik*dkz)
+                           frkd(1) = rsizik*(xr*rrr5ik*dir - rrr3ik*dix)
+                           frkd(2) = rsizik*(yr*rrr5ik*dir - rrr3ik*diy)
+                           frkd(3) = rsizik*(zr*rrr5ik*dir - rrr3ik*diz)
+                           frip(1) = rsizik*(xr*rrr5ik*pkr - rrr3ik*pkx)
+                           frip(2) = rsizik*(yr*rrr5ik*pkr - rrr3ik*pky)
+                           frip(3) = rsizik*(zr*rrr5ik*pkr - rrr3ik*pkz)
+                           frkp(1) = rsizik*(xr*rrr5ik*pir - rrr3ik*pix)
+                           frkp(2) = rsizik*(yr*rrr5ik*pir - rrr3ik*piy)
+                           frkp(3) = rsizik*(zr*rrr5ik*pir - rrr3ik*piz)
+                        else
+                           frid(1) = rsizik*(xr*rdmpik(5)*dkr
+     &                               - rdmpik(3)*dkx)*rr1
+                           frid(2) = rsizik*(yr*rdmpik(5)*dkr
+     &                               - rdmpik(3)*dky)*rr1
+                           frid(3) = rsizik*(zr*rdmpik(5)*dkr
+     &                               - rdmpik(3)*dkz)*rr1
+                           frkd(1) = rsizik*(xr*rdmpik(5)*dir
+     &                               - rdmpik(3)*dix)*rr1
+                           frkd(2) = rsizik*(yr*rdmpik(5)*dir
+     &                               - rdmpik(3)*diy)*rr1
+                           frkd(3) = rsizik*(zr*rdmpik(5)*dir
+     &                               - rdmpik(3)*diz)*rr1
+                           frip(1) = rsizik*(xr*rdmpik(5)*pkr
+     &                               - rdmpik(3)*pkx)*rr1
+                           frip(2) = rsizik*(yr*rdmpik(5)*pkr
+     &                               - rdmpik(3)*pky)*rr1
+                           frip(3) = rsizik*(zr*rdmpik(5)*pkr
+     &                               - rdmpik(3)*pkz)*rr1
+                           frkp(1) = rsizik*(xr*rdmpik(5)*pir
+     &                               - rdmpik(3)*pix)*rr1
+                           frkp(2) = rsizik*(yr*rdmpik(5)*pir
+     &                               - rdmpik(3)*piy)*rr1
+                           frkp(3) = rsizik*(zr*rdmpik(5)*pir
+     &                               - rdmpik(3)*piz)*rr1
+                        end if
+                     end if
                      if (use_polymer) then
                         if (r2 .le. polycut2) then
                            do j = 1, 3
@@ -1694,15 +1836,19 @@ c
                               fkd(j) = fkd(j) * uscale(k)
                               fip(j) = fip(j) * uscale(k)
                               fkp(j) = fkp(j) * uscale(k)
+                              frid(j) = frid(j) * wrscale(k)
+                              frkd(j) = frkd(j) * wrscale(k)
+                              frip(j) = frip(j) * wrscale(k)
+                              frkp(j) = frkp(j) * wrscale(k)
                            end do
                         end if
                      end if
                      do j = 1, 3
-                        field(j,ii) = field(j,ii) + fid(j)
-                        fieldp(j,ii) = fieldp(j,ii) + fip(j)
+                        field(j,ii) = field(j,ii) + fid(j) + frid(j)
+                        fieldp(j,ii) = fieldp(j,ii) + fip(j) + frip(j)
                         if (ii .ne. kk) then
-                           field(j,kk) = field(j,kk) + fkd(j)
-                           fieldp(j,kk) = fieldp(j,kk) + fkp(j)
+                           field(j,kk) = field(j,kk) + fkd(j) + frkd(j)
+                           fieldp(j,kk) = fieldp(j,kk) + fkp(j) +frkp(j)
                         end if
                      end do
                   end if
@@ -1725,15 +1871,19 @@ c
             end do
             do j = 1, n12(i)
                wscale(i12(j,i)) = 1.0d0
+               wrscale(i12(j,i)) = 1.0d0
             end do
             do j = 1, n13(i)
                wscale(i13(j,i)) = 1.0d0
+               wrscale(i13(j,i)) = 1.0d0
             end do
             do j = 1, n14(i)
                wscale(i14(j,i)) = 1.0d0
+               wrscale(i14(j,i)) = 1.0d0
             end do
             do j = 1, n15(i)
                wscale(i15(j,i)) = 1.0d0
+               wrscale(i15(j,i)) = 1.0d0
             end do
          end do
       end if
@@ -3389,6 +3539,7 @@ c
 c     modules for exind
       use chgpot
       use exind
+      use reppot
       implicit none
       integer i,j,k,m
       integer ii,kk,kkk
@@ -3435,6 +3586,7 @@ c     variables for exind
       real*8 f
       real*8 frid(3),frkd(3)
       real*8 rr9,rr11
+      real*8 rrr3ik,rrr5ik,rrr7ik
       real*8 rsizi,rsizk,rsizik
       real*8 rvali,rvalk
       real*8 rdmpi,rdmpk
@@ -3514,7 +3666,7 @@ c
 !$OMP& nchunk,ntpair,tindex,tdipdip,toffset,field,fieldp,fieldt,fieldtp,
 !$OMP& sizpei,dmppei,elepei,use_exind,pr2scale,pr3scale,pr4scale,
 !$OMP& pr5scale,pr2iscale,pr3iscale,pr4iscale,pr5iscale,wr2scale,
-!$OMP& wr3scale,wr4scale,wr5scale,f)
+!$OMP& wr3scale,wr4scale,wr5scale,f,delS2R)
 !$OMP& firstprivate(pscale,dscale,uscale,wscale,nlocal,prscale,wrscale,
 !$OMP& frid,frkd)
 !$OMP DO reduction(+:fieldt,fieldtp) schedule(static,nchunk)
@@ -3833,24 +3985,48 @@ c
                      call damprep (r,r2,rr1,rr3,rr5,rr7,rr9,rr11,
      &                             7,rdmpi,rdmpk,rdmpik)
                      rsizik = rsizi*rsizk * prscale(k)
-                     frid(1) = rsizik*(-xr*(rdmpik(3)*rvalk
-     &                      - rdmpik(5)*dkr + rdmpik(7)*qkr)
-     &                      - rdmpik(3)*dkx + 2.0d0*rdmpik(5)*qkx)*rr1
-                     frid(2) = rsizik*(-yr*(rdmpik(3)*rvalk
-     &                      - rdmpik(5)*dkr + rdmpik(7)*qkr)
-     &                      - rdmpik(3)*dky + 2.0d0*rdmpik(5)*qky)*rr1
-                     frid(3) = rsizik*(-zr*(rdmpik(3)*rvalk
-     &                      - rdmpik(5)*dkr + rdmpik(7)*qkr)
-     &                      - rdmpik(3)*dkz + 2.0d0*rdmpik(5)*qkz)*rr1
-                     frkd(1) = rsizik*(xr*(rdmpik(3)*rvali
-     &                      + rdmpik(5)*dir + rdmpik(7)*qir)
-     &                      - rdmpik(3)*dix - 2.0d0*rdmpik(5)*qix)*rr1
-                     frkd(2) = rsizik*(yr*(rdmpik(3)*rvali
-     &                      + rdmpik(5)*dir + rdmpik(7)*qir)
-     &                      - rdmpik(3)*diy - 2.0d0*rdmpik(5)*qiy)*rr1
-                     frkd(3) = rsizik*(zr*(rdmpik(3)*rvali
-     &                      + rdmpik(5)*dir + rdmpik(7)*qir)
-     &                      - rdmpik(3)*diz - 2.0d0*rdmpik(5)*qiz)*rr1
+                     if (delS2R) then
+                        rrr3ik = rdmpik(3) * rr3
+                        rrr5ik = rdmpik(5) * rr5
+                        rrr7ik = rdmpik(7) * rr7
+                        frid(1) = rsizik*(-xr*(rrr3ik*rvalk
+     &                           - rrr5ik*dkr + rrr7ik*qkr)
+     &                           - rrr3ik*dkx + 2.0d0*rrr5ik*qkx)
+                        frid(2) = rsizik*(-yr*(rrr3ik*rvalk
+     &                           - rrr5ik*dkr + rrr7ik*qkr)
+     &                           - rrr3ik*dky + 2.0d0*rrr5ik*qky)
+                        frid(3) = rsizik*(-zr*(rrr3ik*rvalk
+     &                           - rrr5ik*dkr + rrr7ik*qkr)
+     &                           - rrr3ik*dkz + 2.0d0*rrr5ik*qkz)
+                        frkd(1) = rsizik*(xr*(rrr3ik*rvali
+     &                           + rrr5ik*dir + rrr7ik*qir)
+     &                           - rrr3ik*dix - 2.0d0*rrr5ik*qix)
+                        frkd(2) = rsizik*(yr*(rrr3ik*rvali
+     &                           + rrr5ik*dir + rrr7ik*qir)
+     &                           - rrr3ik*diy - 2.0d0*rrr5ik*qiy)
+                        frkd(3) = rsizik*(zr*(rrr3ik*rvali
+     &                           + rrr5ik*dir + rrr7ik*qir)
+     &                           - rrr3ik*diz - 2.0d0*rrr5ik*qiz)
+                     else
+                        frid(1) = rsizik*(-xr*(rdmpik(3)*rvalk
+     &                        - rdmpik(5)*dkr + rdmpik(7)*qkr)
+     &                        - rdmpik(3)*dkx + 2.0d0*rdmpik(5)*qkx)*rr1
+                        frid(2) = rsizik*(-yr*(rdmpik(3)*rvalk
+     &                        - rdmpik(5)*dkr + rdmpik(7)*qkr)
+     &                        - rdmpik(3)*dky + 2.0d0*rdmpik(5)*qky)*rr1
+                        frid(3) = rsizik*(-zr*(rdmpik(3)*rvalk
+     &                        - rdmpik(5)*dkr + rdmpik(7)*qkr)
+     &                        - rdmpik(3)*dkz + 2.0d0*rdmpik(5)*qkz)*rr1
+                        frkd(1) = rsizik*(xr*(rdmpik(3)*rvali
+     &                        + rdmpik(5)*dir + rdmpik(7)*qir)
+     &                        - rdmpik(3)*dix - 2.0d0*rdmpik(5)*qix)*rr1
+                        frkd(2) = rsizik*(yr*(rdmpik(3)*rvali
+     &                        + rdmpik(5)*dir + rdmpik(7)*qir)
+     &                        - rdmpik(3)*diy - 2.0d0*rdmpik(5)*qiy)*rr1
+                        frkd(3) = rsizik*(zr*(rdmpik(3)*rvali
+     &                        + rdmpik(5)*dir + rdmpik(7)*qir)
+     &                        - rdmpik(3)*diz - 2.0d0*rdmpik(5)*qiz)*rr1
+                     end if
                   end if
 c
 c     find terms needed later to compute mutual polarization
@@ -3862,9 +4038,15 @@ c
                      rr3ik = dmpe(3) - (1.0d0-scalek*dmpik(3))*rr3
                      rr5ik = dmpe(5) - (1.0d0-scalek*dmpik(5))*rr5
                      if (use_exind) then
-                        rsizik = rsizi*rsizk * wrscale(k) * rr1
-                        rr3ik = rr3ik + rdmpik(3)*rsizik
-                        rr5ik = rr5ik + rdmpik(5)*rsizik
+                        if (delS2R) then
+                           rsizik = rsizi*rsizk * wrscale(k)
+                           rr3ik = rr3ik + rrr3ik*rsizik
+                           rr5ik = rr5ik + rrr5ik*rsizik
+                        else
+                           rsizik = rsizi*rsizk * wrscale(k) * rr1
+                           rr3ik = rr3ik + rdmpik(3)*rsizik
+                           rr5ik = rr5ik + rdmpik(5)*rsizik
+                        end if
                      end if
                      nlocal = nlocal + 1
                      ilocal(1,nlocal) = ii
