@@ -96,9 +96,14 @@ c
          zmid = zmid / weigh
       end if
       do i = 1, n
-         xcm(i) = x(i) - xmid
-         ycm(i) = y(i) - ymid
-         zcm(i) = z(i) - zmid
+c     Original
+c         xcm(i) = x(i) - xmid
+c         ycm(i) = y(i) - ymid
+c         zcm(i) = z(i) - zmid
+c     Changed
+         xcm(i) = x(i)
+         ycm(i) = y(i)
+         zcm(i) = z(i)
       end do
 c
 c     alter partial charges and monopoles via charge flux

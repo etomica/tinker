@@ -143,6 +143,10 @@ c
          end if
       end do
 c
+c     turn on the exchange induction potential if used
+c
+      if (nexind .ne. 0)  use_exind = .true.
+c
 c     condense exchange induction sites to the list of multipole sites
 c
       if (use_exind) then 
@@ -155,9 +159,5 @@ c
             elepei(ii) = elepei(i)
          end do
       end if
-c
-c     turn off the exchange induction potential if not used
-c
-      if (nexind .eq. 0)  use_exind = .false.
       return
       end

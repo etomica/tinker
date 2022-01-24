@@ -9,7 +9,7 @@
 # source directory
 src := $(PWD)
 # release / debug / profile / etc.
-opt := release
+opt := debug
 # gfortran / gfortran8 / gfortran-8 / ifort / ifort14 / ifort-14 / etc.
 F77 := gfortran
 # FFTW directory
@@ -95,7 +95,7 @@ ifeq ($(use_gfortran__), true)
       OPTFLAGS :=
     else
       # debug
-      OPTFLAGS :=
+      OPTFLAGS := -Og -fbacktrace -fcheck=bounds -Wunused -Wmaybe-uninitialized
     endif
     F77FLAGS := -c
     LIBDIR := -L. -L$(TINKER_LIBDIR)/linux
