@@ -30,6 +30,14 @@ c
       character*20 keyword
       character*240 record
       character*240 string
+
+      real values(2)
+      real t1, t2, t3, t4, t5, t6, t7, t8, t9
+      integer nt
+      real st1, st2, st3, st4, st5, st6, st7, st8, st9, st10
+      data nt /0/, st1 /0/, st2 /0/, st3 /0/, st4 /0/, st5 /0/
+      data st6 /0/, st7 /0/, st8 /0/, st9 /0/, st10 /0/
+      save nt, st1, st2, st3, st4, st5, st6, st7, st8, st9, st10
 c
 c
 c     set the default values for the active potentials
@@ -63,10 +71,13 @@ c
       use_metal = .false.
       use_geom = .true.
       use_extra = .true.
+
+c     call dtime(values, t1)
 c
 c     read the potential energy force field parameter file
 c
       call getprm
+c     call dtime(values, t2)
 c
 c     check keywords for biopolymer atom type definitions
 c
@@ -107,6 +118,7 @@ c
             end if
          end if
       end do
+c     call dtime(values, t3)
 c
 c     check keywords for potential function control parameters
 c
@@ -114,5 +126,11 @@ c
          record = keyline(i)
          call prmkey (record)
       end do
+c     call dtime(values, t4)
+      st2 = st2 + t2
+      st3 = st3 + t3
+      st4 = st4 + t4
+      nt = nt + 1
+c     write (*,*) 'field', st2/nt, st3/nt, st4/nt
       return
       end

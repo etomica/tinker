@@ -38,10 +38,10 @@ c
       integer maxbio
       parameter (maxatm=1000000)
       parameter (maxtyp=5000)
-      parameter (maxclass=1000)
+      parameter (maxclass=10)
       parameter (maxval=8)
       parameter (maxref=30)
-      parameter (maxgrp=1000)
+      parameter (maxgrp=100)
       parameter (maxres=10000)
       parameter (maxfix=100000)
       parameter (maxbio=10000)

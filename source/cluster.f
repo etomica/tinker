@@ -36,6 +36,10 @@ c
       character*20 keyword
       character*240 record
       character*240 string
+
+      real values(2)
+      real t1, t2, t3, t4, t5, t6, t7, t8, t9, t10
+c     call dtime(values, t1)
 c
 c
 c     perform dynamic allocation of some global arrays
@@ -47,6 +51,7 @@ c
       if (allocated(grplist))  deallocate (grplist)
       allocate (kgrp(n))
       allocate (grplist(n))
+c     call dtime(values, t2)
 c
 c     set defaults for the group atom list and weight options
 c
@@ -62,11 +67,13 @@ c
          igrp(1,i) = 1
          igrp(2,i) = 0
       end do
+c     call dtime(values, t3)
       do i = 0, maxgrp
          do j = 0, maxgrp
             wgrp(j,i) = 1.0d0
          end do
       end do
+c     call dtime(values, t4)
 c
 c     perform dynamic allocation of some local arrays
 c
@@ -151,6 +158,7 @@ c
             use_intra = .false.
          end if
       end do
+c     call dtime(values, t5)
 c
 c     pack atoms of each group into a contiguous indexed list
 c
@@ -183,6 +191,7 @@ c
      &         call sort (size,kgrp(igrp(1,i)))
          end do
       end if
+c     call dtime(values, t6)
 c
 c     perform deallocation of some local arrays
 c
@@ -198,6 +207,7 @@ c
             wgrp(i,i) = 1.0d0
          end do
       end if
+c     call dtime(values, t7)
       if (use_inter) then
          do i = 0, ngrp
             do j = 0, ngrp
@@ -206,6 +216,7 @@ c
             wgrp(i,i) = 0.0d0
          end do
       end if
+c     call dtime(values, t8)
 c
 c     disable consideration of interactions with any empty groups
 c
@@ -218,6 +229,7 @@ c
             end do
          end if
       end do
+c     call dtime(values, t9)
 c
 c     turn off bounds and replicas for intragroup calculations
 c
@@ -275,5 +287,7 @@ c
             end do
          end do
       end if
+c     call dtime(values, t10)
+c     write (*,*) 'cluster', t1, t2, t3, t4, t5, t6, t7, t8, t9, t10
       return
       end

@@ -74,6 +74,10 @@ c
       character*16 blank16
       character*20 blank20
       character*24 blank24
+      
+      real values(2)
+      real tt1, tt2, tt3, tt4, tt5, tt6, tt7, tt8, tt9
+c     call dtime(values, tt1)
 c
 c
 c     define blank character strings of various lengths
@@ -195,6 +199,7 @@ c
       do i = 1, maxnpi4
          kpi4(i) = blank8
       end do
+c     call dtime(values, tt2)
 c
 c     perform dynamic allocation of some global arrays
 c
@@ -231,6 +236,7 @@ c
       if (.not. allocated(ionize))  allocate (ionize(maxclass))
       if (.not. allocated(repulse))  allocate (repulse(maxclass))
       if (.not. allocated(biotyp))  allocate (biotyp(maxbio))
+c     call dtime(values, tt3)
 c
 c     initialize values of some force field parameters
 c
@@ -258,6 +264,7 @@ c
          csr(i) = 0.0d0
          gkr(i) = 0.0d0
       end do
+c     call dtime(values, tt4)
       do i = 1, maxclass
          do j = 1, 2
             stbn(j,i) = 0.0d0
@@ -278,9 +285,11 @@ c
          ionize(i) = 0.0d0
          repulse(i) = 0.0d0
       end do
+c     call dtime(values, tt5)
       do i = 1, maxbio
          biotyp(i) = 0
       end do
+c     call dtime(values, tt6)
 c
 c     set default control parameters for local geometry terms
 c
@@ -421,10 +430,13 @@ c
       rfsize = 1000000.0d0
       rfbulkd = 80.0d0
       rfterms = 1
+c     call dtime(values, tt7)
+c     write (*,*) 'initprm', tt2, tt3, tt4, tt5, tt6, tt7
 c
 c     initialize some Merck Molecular force field parameters
 c
-      call initmmff
+c     AJS we don't use MMFF... very expensive
+c     call initmmff
       return
       end
 c

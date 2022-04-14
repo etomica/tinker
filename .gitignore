@@ -21,9 +21,12 @@ lib/windows/*
 !lib/windows/0README
 listing
 source/*.a
+source/*.so
 source/*.mod
 source/*.o
+source/*.oo
 source/*.x
+source/*.x?
 source/*.make
 source/*-*
 usage
